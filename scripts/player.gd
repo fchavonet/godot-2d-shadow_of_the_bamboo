@@ -21,9 +21,10 @@ const ATTACK_SIZES: Array[Vector2] = [
 const ATTACK_ACTIVE_FRAMES: Array[Vector2i] = [
 	Vector2i(1, 2),
 	Vector2i(0, 1),
-	Vector2i(0, 3),
+	Vector2i(0, 4),
 ]
 
+const JAB_HIT_FRAMES: Array[int] = [0, 2, 4]
 const ROLL_HITBOX_POSITION := Vector2(0.0, -8.0)
 const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 
@@ -58,6 +59,7 @@ var is_attacking: bool = false
 var combo_index: int = 0
 var attack_queued: bool = false
 var hit_targets: Array[Area2D] = []
+var last_jab_hit_frame: int = -1
 var hitbox_refresh_pending: bool = false
 
 @onready var visuals: Node2D = $Visuals
@@ -277,6 +279,7 @@ func start_attack() -> void:
 
 
 func play_combo_attack() -> void:
+	last_jab_hit_frame = -1
 	hit_targets.clear()
 	hitbox_refresh_pending = true
 
@@ -295,13 +298,21 @@ func check_attack_hits() -> void:
 		hitbox_refresh_pending = false
 		return
 
-	# Rolls stay active throughout the animation; combo strikes use frame windows.
 	if not is_rolling:
 		var active_frames := ATTACK_ACTIVE_FRAMES[combo_index]
 		var current_frame := animated_sprite.frame
 
 		if current_frame < active_frames.x or current_frame > active_frames.y:
 			return
+
+		if ATTACK_ANIMATIONS[combo_index] == &"jabs":
+			if current_frame not in JAB_HIT_FRAMES:
+				return
+
+			# Each jab can hit a target once, even across multiple physics ticks.
+			if current_frame != last_jab_hit_frame:
+				last_jab_hit_frame = current_frame
+				hit_targets.clear()
 
 	for target in attack_hitbox.get_overlapping_areas():
 		if target in hit_targets:
@@ -310,7 +321,6 @@ func check_attack_hits() -> void:
 		if not target.has_method("take_hit"):
 			continue
 
-		# Register the target before applying the hit.
 		hit_targets.append(target)
 		target.call("take_hit")
 

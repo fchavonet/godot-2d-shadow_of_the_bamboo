@@ -473,9 +473,9 @@ script = ExtResource("1_g2els")
 texture_filter = 1
 position = Vector2(9.5, -12.5)
 sprite_frames = SubResource("SpriteFrames_u8vuu")
-animation = &"wall_slide"
+animation = &"jabs"
 autoplay = "idle"
-frame_progress = 0.6358543
+frame = 4
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=280754472]
 collision_layer = 0
