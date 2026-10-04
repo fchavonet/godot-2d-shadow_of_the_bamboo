@@ -1,9 +1,21 @@
 extends CharacterBody2D
 
 const ATTACK_ANIMATIONS: Array[StringName] = [
-	&"attack_1",
-	&"attack_2",
-	&"attack_3",
+	&"quick_attack_left",
+	&"quick_attack_right",
+	&"jabs",
+]
+
+const ATTACK_POSITIONS: Array[Vector2] = [
+	Vector2(18.0, -8.0),
+	Vector2(20.5, -8.0),
+	Vector2(25.5, -8.0),
+]
+
+const ATTACK_SIZES: Array[Vector2] = [
+	Vector2(25.5, 16.0),
+	Vector2(30.0, 16.0),
+	Vector2(40.5, 16.0),
 ]
 
 @export var move_speed: float = 90.0
@@ -20,9 +32,11 @@ var attack_queued: bool = false
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
-
+@onready var attack_collision: CollisionShape2D = $Visuals/AttackHitbox/CollisionShape2D
 
 func _ready() -> void:
+	# Keep shape changes local to this player instance.
+	attack_collision.shape = attack_collision.shape.duplicate()
 	animated_sprite.animation_finished.connect(_on_animation_finished)
 
 
@@ -103,6 +117,15 @@ func start_attack() -> void:
 	is_attacking = true
 	combo_index = 0
 	attack_queued = false
+	play_combo_attack()
+
+
+func play_combo_attack() -> void:
+	attack_collision.position = ATTACK_POSITIONS[combo_index]
+
+	var rectangle := attack_collision.shape as RectangleShape2D
+	rectangle.size = ATTACK_SIZES[combo_index]
+
 	animated_sprite.play(ATTACK_ANIMATIONS[combo_index])
 
 
@@ -114,10 +137,9 @@ func _on_animation_finished() -> void:
 		return
 
 	if attack_queued and combo_index < ATTACK_ANIMATIONS.size() - 1:
-		# Each queued input advances the combo by one sequence.
 		attack_queued = false
 		combo_index += 1
-		animated_sprite.play(ATTACK_ANIMATIONS[combo_index])
+		play_combo_attack()
 	else:
 		is_attacking = false
 		combo_index = 0
