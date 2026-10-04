@@ -157,7 +157,7 @@ func _physics_process(delta: float) -> void:
 				velocity.x = direction * move_speed
 
 		if direction != 0.0:
-			visuals.scale.x = direction
+			visuals.scale.x = signf(direction)
 
 	update_wall_slide(direction)
 	move_and_slide()
