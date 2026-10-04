@@ -35,6 +35,7 @@ const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 @export var jump_buffer_time: float = 0.10
 @export_range(0.0, 2.0) var glide_hold_time: float = 0.2
 @export_range(1.0, 300.0) var glide_fall_speed: float = 60.0
+@export_range(1.0, 300.0) var wall_slide_speed: float = 40.0
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
@@ -50,9 +51,11 @@ var combo_index: int = 0
 var attack_queued: bool = false
 var hit_targets: Array[Area2D] = []
 var hitbox_refresh_pending: bool = false
+var is_wall_sliding: bool = false
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
+@onready var sprite_base_position: Vector2 = animated_sprite.position
 @onready var attack_hitbox: Area2D = $Visuals/AttackHitbox
 @onready var attack_collision: CollisionShape2D = $Visuals/AttackHitbox/CollisionShape2D
 
@@ -64,6 +67,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	is_wall_sliding = false
+
 	# A buffered jump can leave the previous floor contact valid until movement.
 	var grounded := is_on_floor() and velocity.y >= 0.0
 
@@ -121,12 +126,17 @@ func _physics_process(delta: float) -> void:
 	if direction != 0.0:
 		visuals.scale.x = direction
 
+	# Limit descent using the previous physics step's wall contact.
+	update_wall_slide(direction)
+
 	move_and_slide()
 
 	# Resolve buffered input as soon as movement detects a landing.
 	if not grounded and is_on_floor() and jump_buffer_timer > 0.0:
 		perform_jump()
 
+	# Refresh the state after movement for landings and new wall contacts.
+	update_wall_slide(direction)
 	update_animation(direction)
 
 
@@ -166,11 +176,33 @@ func update_glide(delta: float, grounded: bool) -> void:
 
 	is_gliding = true
 	velocity.y = minf(velocity.y, glide_fall_speed)
+	
+	
+func update_wall_slide(direction: float) -> void:
+	is_wall_sliding = false
+
+	if is_on_floor() or not is_on_wall() or velocity.y <= 0.0:
+		return
+
+	var wall_normal := get_wall_normal()
+
+	# The wall normal points away from the wall.
+	if direction * wall_normal.x >= 0.0:
+		return
+
+	is_wall_sliding = true
+	is_gliding = false
+	glide_hold_timer = 0.0
+	velocity.y = minf(velocity.y, wall_slide_speed)
 
 
 func update_animation(direction: float) -> void:
+	set_wall_slide_visual(is_wall_sliding)
+
 	if not is_on_floor() or velocity.y < 0.0:
-		if is_gliding:
+		if is_wall_sliding:
+			animated_sprite.play("wall_slide")
+		elif is_gliding:
 			animated_sprite.play("glide")
 		elif velocity.y < 0.0:
 			animated_sprite.play("jump")
@@ -198,6 +230,7 @@ func start_roll() -> void:
 	var rectangle := attack_collision.shape as RectangleShape2D
 	rectangle.size = ROLL_HITBOX_SIZE
 
+	set_wall_slide_visual(false)
 	animated_sprite.play("roll")
 
 
@@ -220,6 +253,7 @@ func play_combo_attack() -> void:
 	var rectangle := attack_collision.shape as RectangleShape2D
 	rectangle.size = ATTACK_SIZES[combo_index]
 
+	animated_sprite.flip_h = false
 	animated_sprite.play(ATTACK_ANIMATIONS[combo_index])
 
 
@@ -268,3 +302,11 @@ func _on_animation_finished() -> void:
 		is_attacking = false
 		combo_index = 0
 		attack_queued = false
+
+func set_wall_slide_visual(enabled: bool) -> void:
+	animated_sprite.flip_h = enabled
+	animated_sprite.position = sprite_base_position
+
+	# Mirror the offset too, so the artwork flips around the Player origin.
+	if enabled:
+		animated_sprite.position.x = -sprite_base_position.x

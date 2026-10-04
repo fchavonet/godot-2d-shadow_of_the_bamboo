@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://bf1tw0m1emi6i" path="res://assets/player/jabs.png" id="4_smehm"]
 [ext_resource type="Texture2D" uid="uid://dhcwuc2wuhug1" path="res://assets/player/jump.png" id="4_tuyoq"]
 [ext_resource type="Texture2D" uid="uid://y7me4i5bbndi" path="res://assets/player/roll.png" id="7_smehm"]
+[ext_resource type="Texture2D" uid="uid://d2w3rcj83jai1" path="res://assets/player/wall_slide.png" id="10_y4r1p"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4r5pv"]
 atlas = ExtResource("2_qlg0r")
@@ -217,6 +218,22 @@ region = Rect2(618, 0, 103, 33)
 atlas = ExtResource("3_qhqgy")
 region = Rect2(721, 0, 103, 33)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_lxlsd"]
+atlas = ExtResource("10_y4r1p")
+region = Rect2(0, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ha2mi"]
+atlas = ExtResource("10_y4r1p")
+region = Rect2(103, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_apa73"]
+atlas = ExtResource("10_y4r1p")
+region = Rect2(206, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_74r1k"]
+atlas = ExtResource("10_y4r1p")
+region = Rect2(309, 0, 103, 33)
+
 [sub_resource type="SpriteFrames" id="SpriteFrames_u8vuu"]
 animations = [{
 "frames": [{
@@ -421,6 +438,23 @@ animations = [{
 "loop": 1,
 "name": &"run",
 "speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lxlsd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ha2mi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_apa73")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_74r1k")
+}],
+"loop": 1,
+"name": &"wall_slide",
+"speed": 8.0
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
@@ -437,10 +471,11 @@ script = ExtResource("1_g2els")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals" unique_id=1808050879]
 texture_filter = 1
-position = Vector2(8.25, -12.5)
+position = Vector2(9.5, -12.5)
 sprite_frames = SubResource("SpriteFrames_u8vuu")
-animation = &"idle"
+animation = &"wall_slide"
 autoplay = "idle"
+frame_progress = 0.6358543
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=280754472]
 collision_layer = 0
