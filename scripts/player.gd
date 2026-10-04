@@ -1,5 +1,11 @@
 extends CharacterBody2D
 
+const ATTACK_ANIMATIONS: Array[StringName] = [
+	&"attack_1",
+	&"attack_2",
+	&"attack_3",
+]
+
 @export var move_speed: float = 90.0
 @export var jump_speed: float = 250.0
 @export_range(0.0, 1.0) var jump_cut_multiplier: float = 0.5
@@ -9,6 +15,8 @@ extends CharacterBody2D
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 var is_attacking: bool = false
+var combo_index: int = 0
+var attack_queued: bool = false
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
@@ -28,8 +36,11 @@ func _physics_process(delta: float) -> void:
 		coyote_timer = maxf(coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
 		
-	if grounded and not is_attacking and Input.is_action_just_pressed("attack"):
-		start_attack()
+	if grounded and Input.is_action_just_pressed("attack"):
+		if not is_attacking:
+			start_attack()
+		elif combo_index < ATTACK_ANIMATIONS.size() - 1:
+			attack_queued = true
 
 	if is_attacking:
 		velocity.x = 0.0
@@ -90,9 +101,24 @@ func update_animation(direction: float) -> void:
 
 func start_attack() -> void:
 	is_attacking = true
-	animated_sprite.play("attack")
+	combo_index = 0
+	attack_queued = false
+	animated_sprite.play(ATTACK_ANIMATIONS[combo_index])
 
 
 func _on_animation_finished() -> void:
-	if animated_sprite.animation == "attack":
+	if not is_attacking:
+		return
+
+	if animated_sprite.animation != ATTACK_ANIMATIONS[combo_index]:
+		return
+
+	if attack_queued and combo_index < ATTACK_ANIMATIONS.size() - 1:
+		# Each queued input advances the combo by one sequence.
+		attack_queued = false
+		combo_index += 1
+		animated_sprite.play(ATTACK_ANIMATIONS[combo_index])
+	else:
 		is_attacking = false
+		combo_index = 0
+		attack_queued = false
