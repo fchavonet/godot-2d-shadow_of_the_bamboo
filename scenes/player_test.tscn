@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://p8b5xeed1xn2"]
 
 [ext_resource type="PackedScene" uid="uid://bl7p85b67cbqt" path="res://scenes/player.tscn" id="1_a8v3n"]
+[ext_resource type="PackedScene" uid="uid://bbi8v2nv45h75" path="res://scenes/training_dummy.tscn" id="2_fdpfy"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_jieny"]
 size = Vector2(320, 32)
@@ -18,6 +19,9 @@ mesh = SubResource("QuadMesh_jieny")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=806914238]
 shape = SubResource("RectangleShape2D_jieny")
+
+[node name="TrainingDummy" parent="." unique_id=1246701887 instance=ExtResource("2_fdpfy")]
+position = Vector2(220, 148)
 
 [node name="Player" parent="." unique_id=1108161139 instance=ExtResource("1_a8v3n")]
 position = Vector2(80, 100)

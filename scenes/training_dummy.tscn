@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://bbi8v2nv45h75"]
+
+[ext_resource type="Script" uid="uid://bmwvgpuhfp4o8" path="res://scripts/training_dummy.gd" id="1_v6s2v"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_x7tab"]
+size = Vector2(12, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v6s2v"]
+size = Vector2(12, 24)
+
+[node name="TrainingDummy" type="Area2D" unique_id=1246701887]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_v6s2v")
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="." unique_id=71424659]
+self_modulate = Color(1, 0.5833334, 0, 1)
+position = Vector2(0, -12)
+mesh = SubResource("QuadMesh_x7tab")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1634461566]
+position = Vector2(0, -12)
+shape = SubResource("RectangleShape2D_v6s2v")
