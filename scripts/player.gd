@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 @export var move_speed: float = 90.0
 @export var jump_speed: float = 250.0
+@export_range(0.0, 1.0) var jump_cut_multiplier: float = 0.5
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
@@ -13,6 +14,9 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = -jump_speed
+		
+	if Input.is_action_just_released("jump") and velocity.y < 0.0:
+		velocity.y *= jump_cut_multiplier
 
 	var direction := Input.get_axis("move_left", "move_right")
 	velocity.x = direction * move_speed
