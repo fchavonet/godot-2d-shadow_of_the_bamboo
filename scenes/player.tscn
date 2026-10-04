@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://cxrfr7v2imh6t" path="res://assets/player/quick_attack.png" id="2_fjrip"]
 [ext_resource type="Texture2D" uid="uid://b0cd1ni2vys3e" path="res://assets/player/fall.png" id="2_qlg0r"]
 [ext_resource type="Texture2D" uid="uid://bvufsi1oxubey" path="res://assets/player/run.png" id="3_qhqgy"]
+[ext_resource type="Texture2D" uid="uid://chyd0apccw7lh" path="res://assets/player/glide.png" id="3_y4r1p"]
 [ext_resource type="Texture2D" uid="uid://bf1tw0m1emi6i" path="res://assets/player/jabs.png" id="4_smehm"]
 [ext_resource type="Texture2D" uid="uid://dhcwuc2wuhug1" path="res://assets/player/jump.png" id="4_tuyoq"]
 [ext_resource type="Texture2D" uid="uid://y7me4i5bbndi" path="res://assets/player/roll.png" id="7_smehm"]
@@ -23,6 +24,22 @@ region = Rect2(206, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_a38lo"]
 atlas = ExtResource("2_qlg0r")
+region = Rect2(309, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g5jhy"]
+atlas = ExtResource("3_y4r1p")
+region = Rect2(0, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_holxr"]
+atlas = ExtResource("3_y4r1p")
+region = Rect2(103, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mx1m4"]
+atlas = ExtResource("3_y4r1p")
+region = Rect2(206, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4gjji"]
+atlas = ExtResource("3_y4r1p")
 region = Rect2(309, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_g2els"]
@@ -221,6 +238,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_g5jhy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_holxr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mx1m4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4gjji")
+}],
+"loop": 0,
+"name": &"glide",
+"speed": 16.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_g2els")
 }, {
 "duration": 1.0,
@@ -405,7 +439,7 @@ script = ExtResource("1_g2els")
 texture_filter = 1
 position = Vector2(8.25, -12.5)
 sprite_frames = SubResource("SpriteFrames_u8vuu")
-animation = &"fall"
+animation = &"idle"
 autoplay = "idle"
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=280754472]

@@ -33,9 +33,13 @@ const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 @export_range(0.0, 1.0) var jump_cut_multiplier: float = 0.5
 @export var coyote_time: float = 0.10
 @export var jump_buffer_time: float = 0.10
+@export_range(0.0, 2.0) var glide_hold_time: float = 0.2
+@export_range(1.0, 300.0) var glide_fall_speed: float = 60.0
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
+var glide_hold_timer: float = 0.0
+var is_gliding: bool = false
 
 var is_rolling: bool = false
 var roll_direction: float = 1.0
@@ -50,8 +54,7 @@ var hitbox_refresh_pending: bool = false
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
 @onready var attack_hitbox: Area2D = $Visuals/AttackHitbox
-@onready var attack_collision: CollisionShape2D = \
-	$Visuals/AttackHitbox/CollisionShape2D
+@onready var attack_collision: CollisionShape2D = $Visuals/AttackHitbox/CollisionShape2D
 
 
 func _ready() -> void:
@@ -110,6 +113,8 @@ func _physics_process(delta: float) -> void:
 	if jump_buffer_timer > 0.0 and coyote_timer > 0.0:
 		perform_jump()
 
+	update_glide(delta, grounded)
+
 	var direction := Input.get_axis("move_left", "move_right")
 	velocity.x = direction * move_speed
 
@@ -135,11 +140,39 @@ func perform_jump() -> void:
 	# A buffered tap released before landing should produce a short jump.
 	if not Input.is_action_pressed("jump"):
 		velocity.y *= jump_cut_multiplier
+		
+func update_glide(delta: float, grounded: bool) -> void:
+	is_gliding = false
+
+	# Only count held input while descending.
+	if grounded or velocity.y <= 0.0 or not Input.is_action_pressed("jump"):
+		glide_hold_timer = 0.0
+		return
+
+	glide_hold_timer = minf(
+		glide_hold_timer + delta,
+		glide_hold_time
+	)
+
+	if glide_hold_timer < glide_hold_time:
+		return
+
+	is_gliding = true
+	velocity.y = minf(velocity.y, glide_fall_speed)
+
+	# Preserve the normal ascent and only limit downward speed.
+	if velocity.y < 0.0:
+		return
+
+	is_gliding = true
+	velocity.y = minf(velocity.y, glide_fall_speed)
 
 
 func update_animation(direction: float) -> void:
 	if not is_on_floor() or velocity.y < 0.0:
-		if velocity.y < 0.0:
+		if is_gliding:
+			animated_sprite.play("glide")
+		elif velocity.y < 0.0:
 			animated_sprite.play("jump")
 		else:
 			animated_sprite.play("fall")
@@ -150,6 +183,9 @@ func update_animation(direction: float) -> void:
 
 
 func start_roll() -> void:
+	is_gliding = false
+	glide_hold_timer = 0.0
+
 	is_rolling = true
 	has_air_rolled = true
 	roll_direction = signf(visuals.scale.x)
@@ -166,6 +202,9 @@ func start_roll() -> void:
 
 
 func start_attack() -> void:
+	is_gliding = false
+	glide_hold_timer = 0.0
+
 	is_attacking = true
 	combo_index = 0
 	attack_queued = false
