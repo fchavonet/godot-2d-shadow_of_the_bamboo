@@ -24,6 +24,9 @@ const ATTACK_ACTIVE_FRAMES: Array[Vector2i] = [
 	Vector2i(0, 3),
 ]
 
+const ROLL_HITBOX_POSITION := Vector2(0.0, -8.0)
+const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
+
 @export var move_speed: float = 90.0
 @export var roll_speed: float = 180.0
 @export var jump_speed: float = 250.0
@@ -79,6 +82,7 @@ func _physics_process(delta: float) -> void:
 		jump_buffer_timer = 0.0
 		velocity.x = roll_direction * roll_speed
 		move_and_slide()
+		check_attack_hits()
 		return
 
 	if grounded and Input.is_action_just_pressed("attack"):
@@ -149,6 +153,15 @@ func start_roll() -> void:
 	is_rolling = true
 	has_air_rolled = true
 	roll_direction = signf(visuals.scale.x)
+
+	hit_targets.clear()
+	hitbox_refresh_pending = true
+
+	attack_collision.position = ROLL_HITBOX_POSITION
+
+	var rectangle := attack_collision.shape as RectangleShape2D
+	rectangle.size = ROLL_HITBOX_SIZE
+
 	animated_sprite.play("roll")
 
 
@@ -177,11 +190,13 @@ func check_attack_hits() -> void:
 		hitbox_refresh_pending = false
 		return
 
-	var active_frames := ATTACK_ACTIVE_FRAMES[combo_index]
-	var current_frame := animated_sprite.frame
+	# Rolls stay active throughout the animation; combo strikes use frame windows.
+	if not is_rolling:
+		var active_frames := ATTACK_ACTIVE_FRAMES[combo_index]
+		var current_frame := animated_sprite.frame
 
-	if current_frame < active_frames.x or current_frame > active_frames.y:
-		return
+		if current_frame < active_frames.x or current_frame > active_frames.y:
+			return
 
 	for target in attack_hitbox.get_overlapping_areas():
 		if target in hit_targets:
@@ -214,4 +229,3 @@ func _on_animation_finished() -> void:
 		is_attacking = false
 		combo_index = 0
 		attack_queued = false
- 
