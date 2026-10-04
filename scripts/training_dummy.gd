@@ -23,4 +23,3 @@ func take_hit() -> void:
 		base_color,
 		0.15
 	)
-	

@@ -18,6 +18,12 @@ const ATTACK_SIZES: Array[Vector2] = [
 	Vector2(40.5, 16.0),
 ]
 
+const ATTACK_ACTIVE_FRAMES: Array[Vector2i] = [
+	Vector2i(1, 2),
+	Vector2i(0, 1),
+	Vector2i(0, 3),
+]
+
 @export var move_speed: float = 90.0
 @export var jump_speed: float = 250.0
 @export_range(0.0, 1.0) var jump_cut_multiplier: float = 0.5
@@ -26,13 +32,20 @@ const ATTACK_SIZES: Array[Vector2] = [
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
+
 var is_attacking: bool = false
 var combo_index: int = 0
 var attack_queued: bool = false
 
+var hit_targets: Array[Area2D] = []
+var hitbox_refresh_pending: bool = false
+
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
-@onready var attack_collision: CollisionShape2D = $Visuals/AttackHitbox/CollisionShape2D
+@onready var attack_hitbox: Area2D = $Visuals/AttackHitbox
+@onready var attack_collision: CollisionShape2D = \
+	$Visuals/AttackHitbox/CollisionShape2D
+
 
 func _ready() -> void:
 	# Keep shape changes local to this player instance.
@@ -49,7 +62,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		coyote_timer = maxf(coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
-		
+
 	if grounded and Input.is_action_just_pressed("attack"):
 		if not is_attacking:
 			start_attack()
@@ -61,6 +74,7 @@ func _physics_process(delta: float) -> void:
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
 		move_and_slide()
+		check_attack_hits()
 		return
 
 	jump_buffer_timer = maxf(jump_buffer_timer - delta, 0.0)
@@ -96,7 +110,7 @@ func perform_jump() -> void:
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
 
-	# A buffered tap released before landing should still produce a short jump.
+	# A buffered tap released before landing should produce a short jump.
 	if not Input.is_action_pressed("jump"):
 		velocity.y *= jump_cut_multiplier
 
@@ -121,12 +135,39 @@ func start_attack() -> void:
 
 
 func play_combo_attack() -> void:
+	hit_targets.clear()
+	hitbox_refresh_pending = true
+
 	attack_collision.position = ATTACK_POSITIONS[combo_index]
 
 	var rectangle := attack_collision.shape as RectangleShape2D
 	rectangle.size = ATTACK_SIZES[combo_index]
 
 	animated_sprite.play(ATTACK_ANIMATIONS[combo_index])
+
+
+func check_attack_hits() -> void:
+	# Let physics refresh overlaps after changing the hitbox.
+	if hitbox_refresh_pending:
+		hitbox_refresh_pending = false
+		return
+
+	var active_frames := ATTACK_ACTIVE_FRAMES[combo_index]
+	var current_frame := animated_sprite.frame
+
+	if current_frame < active_frames.x or current_frame > active_frames.y:
+		return
+
+	for target in attack_hitbox.get_overlapping_areas():
+		if target in hit_targets:
+			continue
+
+		if not target.has_method("take_hit"):
+			continue
+
+		# Register the target before applying the hit.
+		hit_targets.append(target)
+		target.call("take_hit")
 
 
 func _on_animation_finished() -> void:
