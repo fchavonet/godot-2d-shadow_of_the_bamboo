@@ -8,9 +8,14 @@ extends CharacterBody2D
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
+var is_attacking: bool = false
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
+
+
+func _ready() -> void:
+	animated_sprite.animation_finished.connect(_on_animation_finished)
 
 
 func _physics_process(delta: float) -> void:
@@ -22,6 +27,16 @@ func _physics_process(delta: float) -> void:
 	else:
 		coyote_timer = maxf(coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
+		
+	if grounded and not is_attacking and Input.is_action_just_pressed("attack"):
+		start_attack()
+
+	if is_attacking:
+		velocity.x = 0.0
+		coyote_timer = 0.0
+		jump_buffer_timer = 0.0
+		move_and_slide()
+		return
 
 	jump_buffer_timer = maxf(jump_buffer_timer - delta, 0.0)
 
@@ -71,3 +86,13 @@ func update_animation(direction: float) -> void:
 		animated_sprite.play("run")
 	else:
 		animated_sprite.play("idle")
+
+
+func start_attack() -> void:
+	is_attacking = true
+	animated_sprite.play("attack")
+
+
+func _on_animation_finished() -> void:
+	if animated_sprite.animation == "attack":
+		is_attacking = false
