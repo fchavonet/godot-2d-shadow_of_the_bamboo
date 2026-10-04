@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://p8b5xeed1xn2"]
+
+[ext_resource type="PackedScene" uid="uid://bl7p85b67cbqt" path="res://scenes/player.tscn" id="1_a8v3n"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_jieny"]
+size = Vector2(320, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
+size = Vector2(320, 32)
+
+[node name="PlayerTest" type="Node2D" unique_id=1699640654]
+
+[node name="Ground" type="StaticBody2D" parent="." unique_id=1462911902]
+position = Vector2(160, 164)
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="Ground" unique_id=18302802]
+mesh = SubResource("QuadMesh_jieny")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=806914238]
+shape = SubResource("RectangleShape2D_jieny")
+
+[node name="Player" parent="." unique_id=1108161139 instance=ExtResource("1_a8v3n")]
+position = Vector2(80, 100)
