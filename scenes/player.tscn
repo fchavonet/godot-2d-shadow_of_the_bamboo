@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://bvufsi1oxubey" path="res://assets/player/run.png" id="3_qhqgy"]
 [ext_resource type="Texture2D" uid="uid://bf1tw0m1emi6i" path="res://assets/player/jabs.png" id="4_smehm"]
 [ext_resource type="Texture2D" uid="uid://dhcwuc2wuhug1" path="res://assets/player/jump.png" id="4_tuyoq"]
+[ext_resource type="Texture2D" uid="uid://y7me4i5bbndi" path="res://assets/player/roll.png" id="7_smehm"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4r5pv"]
 atlas = ExtResource("2_qlg0r")
@@ -131,6 +132,22 @@ region = Rect2(618, 0, 103, 33)
 [sub_resource type="AtlasTexture" id="AtlasTexture_md1ol"]
 atlas = ExtResource("2_fjrip")
 region = Rect2(721, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2dvfe"]
+atlas = ExtResource("7_smehm")
+region = Rect2(0, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_giy8y"]
+atlas = ExtResource("7_smehm")
+region = Rect2(103, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fdfoy"]
+atlas = ExtResource("7_smehm")
+region = Rect2(206, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hhpqf"]
+atlas = ExtResource("7_smehm")
+region = Rect2(309, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_d2wvv"]
 atlas = ExtResource("3_qhqgy")
@@ -291,6 +308,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_2dvfe")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_giy8y")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fdfoy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hhpqf")
+}],
+"loop": 0,
+"name": &"roll",
+"speed": 16.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_d2wvv")
 }, {
 "duration": 1.0,
@@ -335,8 +369,10 @@ script = ExtResource("1_g2els")
 texture_filter = 1
 position = Vector2(8.25, -12.5)
 sprite_frames = SubResource("SpriteFrames_u8vuu")
-animation = &"quick_attack_right"
+animation = &"roll"
 autoplay = "idle"
+frame = 3
+frame_progress = 1.0
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=280754472]
 collision_layer = 0

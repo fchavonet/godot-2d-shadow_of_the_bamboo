@@ -25,6 +25,7 @@ const ATTACK_ACTIVE_FRAMES: Array[Vector2i] = [
 ]
 
 @export var move_speed: float = 90.0
+@export var roll_speed: float = 180.0
 @export var jump_speed: float = 250.0
 @export_range(0.0, 1.0) var jump_cut_multiplier: float = 0.5
 @export var coyote_time: float = 0.10
@@ -33,10 +34,12 @@ const ATTACK_ACTIVE_FRAMES: Array[Vector2i] = [
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 
+var is_rolling: bool = false
+var roll_direction: float = 1.0
+
 var is_attacking: bool = false
 var combo_index: int = 0
 var attack_queued: bool = false
-
 var hit_targets: Array[Area2D] = []
 var hitbox_refresh_pending: bool = false
 
@@ -62,6 +65,17 @@ func _physics_process(delta: float) -> void:
 	else:
 		coyote_timer = maxf(coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
+
+	if grounded and not is_attacking and not is_rolling:
+		if Input.is_action_just_pressed("roll"):
+			start_roll()
+
+	if is_rolling:
+		coyote_timer = 0.0
+		jump_buffer_timer = 0.0
+		velocity.x = roll_direction * roll_speed
+		move_and_slide()
+		return
 
 	if grounded and Input.is_action_just_pressed("attack"):
 		if not is_attacking:
@@ -127,6 +141,12 @@ func update_animation(direction: float) -> void:
 		animated_sprite.play("idle")
 
 
+func start_roll() -> void:
+	is_rolling = true
+	roll_direction = signf(visuals.scale.x)
+	animated_sprite.play("roll")
+
+
 func start_attack() -> void:
 	is_attacking = true
 	combo_index = 0
@@ -171,6 +191,10 @@ func check_attack_hits() -> void:
 
 
 func _on_animation_finished() -> void:
+	if animated_sprite.animation == &"roll":
+		is_rolling = false
+		return
+
 	if not is_attacking:
 		return
 
