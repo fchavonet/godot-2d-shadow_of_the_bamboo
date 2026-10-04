@@ -101,6 +101,25 @@ region = Rect2(206, 0, 103, 33)
 atlas = ExtResource("4_tuyoq")
 region = Rect2(309, 0, 103, 33)
 
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_smehm"]
+load_path = "res://.godot/imported/jump_spin.png-14c5d67d5d33c8448077453afc0a76e1.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u2ulf"]
+atlas = SubResource("CompressedTexture2D_smehm")
+region = Rect2(0, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6e8lb"]
+atlas = SubResource("CompressedTexture2D_smehm")
+region = Rect2(103, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2gdjj"]
+atlas = SubResource("CompressedTexture2D_smehm")
+region = Rect2(206, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sc3ue"]
+atlas = SubResource("CompressedTexture2D_smehm")
+region = Rect2(309, 0, 103, 33)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_31cv2"]
 atlas = ExtResource("2_fjrip")
 region = Rect2(0, 0, 103, 33)
@@ -274,6 +293,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_u2ulf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6e8lb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2gdjj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sc3ue")
+}],
+"loop": 1,
+"name": &"jump_spin",
+"speed": 16.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_31cv2")
 }, {
 "duration": 1.0,
@@ -369,10 +405,8 @@ script = ExtResource("1_g2els")
 texture_filter = 1
 position = Vector2(8.25, -12.5)
 sprite_frames = SubResource("SpriteFrames_u8vuu")
-animation = &"roll"
+animation = &"fall"
 autoplay = "idle"
-frame = 3
-frame_progress = 1.0
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=280754472]
 collision_layer = 0

@@ -36,6 +36,7 @@ var jump_buffer_timer: float = 0.0
 
 var is_rolling: bool = false
 var roll_direction: float = 1.0
+var has_air_rolled: bool = false
 
 var is_attacking: bool = false
 var combo_index: int = 0
@@ -62,11 +63,14 @@ func _physics_process(delta: float) -> void:
 
 	if grounded:
 		coyote_timer = coyote_time
+		has_air_rolled = false
 	else:
 		coyote_timer = maxf(coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
 
-	if grounded and not is_attacking and not is_rolling:
+	var can_roll := grounded or not has_air_rolled
+
+	if can_roll and not is_attacking and not is_rolling:
 		if Input.is_action_just_pressed("roll"):
 			start_roll()
 
@@ -143,6 +147,7 @@ func update_animation(direction: float) -> void:
 
 func start_roll() -> void:
 	is_rolling = true
+	has_air_rolled = true
 	roll_direction = signf(visuals.scale.x)
 	animated_sprite.play("roll")
 
@@ -209,3 +214,4 @@ func _on_animation_finished() -> void:
 		is_attacking = false
 		combo_index = 0
 		attack_queued = false
+ 
