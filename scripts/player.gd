@@ -56,6 +56,7 @@ var roll_direction: float = 1.0
 var has_air_rolled: bool = false
 
 var is_attacking: bool = false
+var is_air_attack: bool = false
 var combo_index: int = 0
 var attack_queued: bool = false
 var hit_targets: Array[Area2D] = []
@@ -106,14 +107,25 @@ func _physics_process(delta: float) -> void:
 		check_attack_hits()
 		return
 
-	if grounded and Input.is_action_just_pressed("attack"):
+	if Input.is_action_just_pressed("attack"):
 		if not is_attacking:
-			start_attack()
-		elif combo_index < ATTACK_ANIMATIONS.size() - 1:
+			start_attack(not grounded)
+		elif (
+			grounded
+			and not is_air_attack
+			and combo_index < ATTACK_ANIMATIONS.size() - 1
+		):
 			attack_queued = true
 
 	if is_attacking:
-		velocity.x = 0.0
+		# Preserve horizontal momentum while airborne.
+		if grounded:
+			velocity.x = 0.0
+
+		# Keep variable jump height during attacks.
+		if Input.is_action_just_released("jump") and velocity.y < 0.0:
+			velocity.y *= jump_cut_multiplier
+
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
 		move_and_slide()
@@ -248,7 +260,7 @@ func start_roll() -> void:
 	has_wall_jump_momentum = false
 	wall_jump_direction = 0.0
 	wall_jump_timer = 0.0
-	
+
 	is_gliding = false
 	glide_hold_timer = 0.0
 
@@ -268,11 +280,13 @@ func start_roll() -> void:
 	animated_sprite.play("roll")
 
 
-func start_attack() -> void:
+func start_attack(from_air: bool) -> void:
 	is_gliding = false
 	glide_hold_timer = 0.0
 
 	is_attacking = true
+	# Landing must not turn an airborne strike into a combo.
+	is_air_attack = from_air
 	combo_index = 0
 	attack_queued = false
 	play_combo_attack()
@@ -363,11 +377,16 @@ func _on_animation_finished() -> void:
 	if animated_sprite.animation != ATTACK_ANIMATIONS[combo_index]:
 		return
 
-	if attack_queued and combo_index < ATTACK_ANIMATIONS.size() - 1:
+	if (
+		attack_queued
+		and not is_air_attack
+		and combo_index < ATTACK_ANIMATIONS.size() - 1
+	):
 		attack_queued = false
 		combo_index += 1
 		play_combo_attack()
 	else:
 		is_attacking = false
+		is_air_attack = false
 		combo_index = 0
 		attack_queued = false

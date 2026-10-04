@@ -15,6 +15,12 @@ size = Vector2(16, 80)
 [sub_resource type="QuadMesh" id="QuadMesh_1rfy5"]
 size = Vector2(16, 80)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1rfy5"]
+size = Vector2(20, 5)
+
+[sub_resource type="QuadMesh" id="QuadMesh_66hfq"]
+size = Vector2(20, 5)
+
 [node name="PlayerTest" type="Node2D" unique_id=1699640654]
 
 [node name="Ground" type="StaticBody2D" parent="." unique_id=1462911902]
@@ -53,8 +59,35 @@ shape = SubResource("RectangleShape2D_nfwyi")
 [node name="MeshInstance2D" type="MeshInstance2D" parent="Wall3" unique_id=889319112]
 mesh = SubResource("QuadMesh_1rfy5")
 
+[node name="Platform1" type="StaticBody2D" parent="." unique_id=1199072815]
+position = Vector2(148, 140)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1" unique_id=850729707]
+shape = SubResource("RectangleShape2D_1rfy5")
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="Platform1" unique_id=616567573]
+mesh = SubResource("QuadMesh_66hfq")
+
+[node name="Platform2" type="StaticBody2D" parent="." unique_id=1640674664]
+position = Vector2(108, 110)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2" unique_id=1914767115]
+shape = SubResource("RectangleShape2D_1rfy5")
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="Platform2" unique_id=1274035056]
+mesh = SubResource("QuadMesh_66hfq")
+
+[node name="Platform3" type="StaticBody2D" parent="." unique_id=87537948]
+position = Vector2(68, 90)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform3" unique_id=678479404]
+shape = SubResource("RectangleShape2D_1rfy5")
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="Platform3" unique_id=1094973886]
+mesh = SubResource("QuadMesh_66hfq")
+
 [node name="TrainingDummy" parent="." unique_id=1246701887 instance=ExtResource("2_fdpfy")]
-position = Vector2(200, 148)
+position = Vector2(228, 148)
 
 [node name="Player" parent="." unique_id=1108161139 instance=ExtResource("1_a8v3n")]
 position = Vector2(30, 125)
