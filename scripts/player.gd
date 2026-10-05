@@ -44,6 +44,7 @@ const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 @export var knockback_speed: float = 120.0
 @export var knockback_lift: float = 120.0
 @export_range(0.05, 1.0) var hurt_duration: float = 0.18
+@export_range(0.0, 3.0) var respawn_delay: float = 0.6
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
@@ -69,6 +70,8 @@ var last_jab_hit_frame: int = -1
 var hitbox_refresh_pending: bool = false
 var invulnerability_timer: float = 0.0
 var hurt_timer: float = 0.0
+var is_dead: bool = false
+var respawn_timer: float = -1.0
 
 @onready var health: int = max_health
 @onready var visuals: Node2D = $Visuals
@@ -77,6 +80,8 @@ var hurt_timer: float = 0.0
 @onready var sprite_base_position: Vector2 = animated_sprite.position
 @onready var attack_hitbox: Area2D = $Visuals/AttackHitbox
 @onready var attack_collision: CollisionShape2D = $Visuals/AttackHitbox/CollisionShape2D
+@onready var spawn_position: Vector2 = global_position
+@onready var spawn_facing: float = visuals.scale.x
 
 
 func _ready() -> void:
@@ -86,6 +91,22 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		# Keep gravity and floor collisions active during death.
+		if not is_on_floor():
+			velocity += get_gravity() * delta
+
+		move_and_slide()
+
+		# A negative timer means the death animation is still playing.
+		if respawn_timer >= 0.0:
+			respawn_timer = maxf(respawn_timer - delta, 0.0)
+
+			if respawn_timer == 0.0:
+				respawn()
+
+		return
+	
 	update_invulnerability(delta)
 
 	is_wall_sliding = false
@@ -386,6 +407,11 @@ func set_wall_slide_visual(enabled: bool) -> void:
 
 
 func _on_animation_finished() -> void:
+	if is_dead:
+		if animated_sprite.animation == &"death":
+			respawn_timer = respawn_delay
+		return
+
 	if animated_sprite.animation == &"roll":
 		is_rolling = false
 		return
@@ -419,7 +445,7 @@ func take_damage(amount: int, source_position: Vector2) -> void:
 	print("Player health: %d/%d" % [health, max_health])
 
 	if health == 0:
-		print("Player defeated")
+		die()
 		return
 
 	invulnerability_timer = invulnerability_duration
@@ -479,3 +505,60 @@ func update_invulnerability(delta: float) -> void:
 			alpha_factor = 0.35
 
 	visuals.modulate.a = base_visual_alpha * alpha_factor
+	
+func die() -> void:
+	if is_dead:
+		return
+
+	is_dead = true
+	health = 0
+	respawn_timer = -1.0
+	velocity = Vector2.ZERO
+
+	# Cancel all actions and buffered inputs.
+	is_attacking = false
+	is_air_attack = false
+	attack_queued = false
+	combo_index = 0
+	is_rolling = false
+	has_air_rolled = false
+	hit_targets.clear()
+	last_jab_hit_frame = -1
+	hitbox_refresh_pending = false
+
+	is_gliding = false
+	glide_hold_timer = 0.0
+	is_wall_sliding = false
+	wall_jump_timer = 0.0
+	wall_jump_direction = 0.0
+	has_wall_jump_momentum = false
+
+	coyote_timer = 0.0
+	jump_buffer_timer = 0.0
+	hurt_timer = 0.0
+	invulnerability_timer = 0.0
+
+	# Restore normal opacity and sprite alignment before playing death.
+	visuals.modulate.a = base_visual_alpha
+	set_wall_slide_visual(false)
+	animated_sprite.play("death")
+
+	print("Player defeated")
+
+
+func respawn() -> void:
+	global_position = spawn_position
+	velocity = Vector2.ZERO
+	health = max_health
+	is_dead = false
+	respawn_timer = -1.0
+
+	visuals.scale.x = spawn_facing
+	set_wall_slide_visual(false)
+	animated_sprite.play("idle")
+
+	# Briefly protect the player after respawning.
+	invulnerability_timer = invulnerability_duration
+	update_invulnerability(0.0)
+
+	print("Player respawned: %d/%d" % [health, max_health])
