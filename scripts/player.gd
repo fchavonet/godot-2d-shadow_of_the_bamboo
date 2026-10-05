@@ -39,6 +39,7 @@ const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 @export_range(1.0, 300.0) var wall_slide_speed: float = 40.0
 @export var wall_jump_speed: float = 150.0
 @export_range(0.01, 0.5) var wall_jump_control_delay: float = 0.12
+@export_range(1, 100) var max_health: int = 5
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
@@ -63,6 +64,7 @@ var hit_targets: Array[Area2D] = []
 var last_jab_hit_frame: int = -1
 var hitbox_refresh_pending: bool = false
 
+@onready var health: int = max_health
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
 @onready var sprite_base_position: Vector2 = animated_sprite.position
@@ -390,3 +392,14 @@ func _on_animation_finished() -> void:
 		is_air_attack = false
 		combo_index = 0
 		attack_queued = false
+		
+
+func take_damage(amount: int) -> void:
+	if amount <= 0 or health <= 0:
+		return
+
+	health = maxi(health - amount, 0)
+	print("Player health: %d/%d" % [health, max_health])
+
+	if health == 0:
+		print("Player defeated")

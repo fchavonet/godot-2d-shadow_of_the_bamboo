@@ -464,6 +464,10 @@ size = Vector2(25.5, 16)
 radius = 5.0
 height = 16.0
 
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_jieny"]
+radius = 5.0
+height = 16.0
+
 [node name="Player" type="CharacterBody2D" unique_id=1108161139]
 script = ExtResource("1_g2els")
 
@@ -488,3 +492,12 @@ shape = SubResource("RectangleShape2D_jieny")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1247564155]
 position = Vector2(0, -8)
 shape = SubResource("CapsuleShape2D_d2wvv")
+
+[node name="Hurtbox" type="Area2D" parent="." unique_id=1535611133]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=1553181001]
+position = Vector2(0, -8)
+shape = SubResource("CapsuleShape2D_jieny")
