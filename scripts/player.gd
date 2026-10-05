@@ -41,6 +41,9 @@ const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 @export_range(0.01, 0.5) var wall_jump_control_delay: float = 0.12
 @export_range(1, 100) var max_health: int = 5
 @export_range(0.1, 3.0) var invulnerability_duration: float = 1.0
+@export var knockback_speed: float = 120.0
+@export var knockback_lift: float = 120.0
+@export_range(0.05, 1.0) var hurt_duration: float = 0.18
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
@@ -65,6 +68,7 @@ var hit_targets: Array[Area2D] = []
 var last_jab_hit_frame: int = -1
 var hitbox_refresh_pending: bool = false
 var invulnerability_timer: float = 0.0
+var hurt_timer: float = 0.0
 
 @onready var health: int = max_health
 @onready var visuals: Node2D = $Visuals
@@ -99,6 +103,14 @@ func _physics_process(delta: float) -> void:
 	else:
 		coyote_timer = maxf(coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
+		
+	if hurt_timer > 0.0:
+		hurt_timer = maxf(hurt_timer - delta, 0.0)
+		coyote_timer = 0.0
+		jump_buffer_timer = 0.0
+		move_and_slide()
+		update_animation(0.0)
+		return
 
 	var can_roll := grounded or not has_air_rolled
 
@@ -399,7 +411,7 @@ func _on_animation_finished() -> void:
 		attack_queued = false
 		
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, source_position: Vector2) -> void:
 	if amount <= 0 or health <= 0 or invulnerability_timer > 0.0:
 		return
 
@@ -412,6 +424,43 @@ func take_damage(amount: int) -> void:
 
 	invulnerability_timer = invulnerability_duration
 	update_invulnerability(0.0)
+	apply_knockback(source_position)
+	
+	
+func apply_knockback(source_position: Vector2) -> void:
+	var push_direction := signf(global_position.x - source_position.x)
+
+	# Fall back to backward knockback when both centers are aligned.
+	if is_zero_approx(push_direction):
+		push_direction = -signf(visuals.scale.x)
+
+	# Cancel the current action and any queued combo strike.
+	is_attacking = false
+	is_air_attack = false
+	attack_queued = false
+	combo_index = 0
+	is_rolling = false
+	hit_targets.clear()
+	last_jab_hit_frame = -1
+	hitbox_refresh_pending = false
+
+	is_gliding = false
+	glide_hold_timer = 0.0
+	is_wall_sliding = false
+	wall_jump_timer = 0.0
+	wall_jump_direction = 0.0
+	has_wall_jump_momentum = false
+
+	coyote_timer = 0.0
+	jump_buffer_timer = 0.0
+	hurt_timer = hurt_duration
+
+	velocity = Vector2(
+		push_direction * knockback_speed,
+		-knockback_lift
+	)
+
+	update_animation(0.0)
 
 
 func update_invulnerability(delta: float) -> void:

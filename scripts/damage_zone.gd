@@ -8,8 +8,7 @@ func _ready() -> void:
 
 
 func _on_area_entered(area: Area2D) -> void:
-	# The hurtbox belongs directly to the character receiving damage.
 	var receiver := area.get_parent()
 
 	if receiver != null and receiver.has_method("take_damage"):
-		receiver.call("take_damage", damage)
+		receiver.call("take_damage", damage, global_position)
