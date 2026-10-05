@@ -40,6 +40,7 @@ const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 @export var wall_jump_speed: float = 150.0
 @export_range(0.01, 0.5) var wall_jump_control_delay: float = 0.12
 @export_range(1, 100) var max_health: int = 5
+@export_range(0.1, 3.0) var invulnerability_duration: float = 1.0
 
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
@@ -63,9 +64,11 @@ var attack_queued: bool = false
 var hit_targets: Array[Area2D] = []
 var last_jab_hit_frame: int = -1
 var hitbox_refresh_pending: bool = false
+var invulnerability_timer: float = 0.0
 
 @onready var health: int = max_health
 @onready var visuals: Node2D = $Visuals
+@onready var base_visual_alpha: float = visuals.modulate.a
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
 @onready var sprite_base_position: Vector2 = animated_sprite.position
 @onready var attack_hitbox: Area2D = $Visuals/AttackHitbox
@@ -79,6 +82,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	update_invulnerability(delta)
+
 	is_wall_sliding = false
 	wall_jump_timer = maxf(wall_jump_timer - delta, 0.0)
 
@@ -395,7 +400,7 @@ func _on_animation_finished() -> void:
 		
 
 func take_damage(amount: int) -> void:
-	if amount <= 0 or health <= 0:
+	if amount <= 0 or health <= 0 or invulnerability_timer > 0.0:
 		return
 
 	health = maxi(health - amount, 0)
@@ -403,3 +408,25 @@ func take_damage(amount: int) -> void:
 
 	if health == 0:
 		print("Player defeated")
+		return
+
+	invulnerability_timer = invulnerability_duration
+	update_invulnerability(0.0)
+
+
+func update_invulnerability(delta: float) -> void:
+	if invulnerability_timer <= 0.0:
+		return
+
+	invulnerability_timer = maxf(invulnerability_timer - delta, 0.0)
+
+	var alpha_factor: float = 1.0
+
+	if invulnerability_timer > 0.0:
+		var elapsed := invulnerability_duration - invulnerability_timer
+
+		# Alternate opacity every 0.08 seconds while protected.
+		if int(elapsed / 0.08) % 2 == 0:
+			alpha_factor = 0.35
+
+	visuals.modulate.a = base_visual_alpha * alpha_factor

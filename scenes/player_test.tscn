@@ -90,9 +90,9 @@ mesh = SubResource("QuadMesh_66hfq")
 [node name="TrainingDummy" parent="." unique_id=1246701887 instance=ExtResource("2_fdpfy")]
 position = Vector2(228, 148)
 
+[node name="DamageZone" parent="." unique_id=1382605032 instance=ExtResource("3_6p80c")]
+position = Vector2(277, 148)
+
 [node name="Player" parent="." unique_id=1108161139 instance=ExtResource("1_a8v3n")]
 position = Vector2(30, 125)
 wall_jump_speed = 90.0
-
-[node name="DamageZone" parent="." unique_id=1382605032 instance=ExtResource("3_6p80c")]
-position = Vector2(277, 148)
