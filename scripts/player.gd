@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+signal health_changed(current: int, maximum: int)
+
 const ATTACK_ANIMATIONS: Array[StringName] = [
 	&"quick_attack_left",
 	&"quick_attack_right",
@@ -88,6 +90,7 @@ func _ready() -> void:
 	# Keep shape changes local to this player instance.
 	attack_collision.shape = attack_collision.shape.duplicate()
 	animated_sprite.animation_finished.connect(_on_animation_finished)
+	health_changed.emit(health, max_health)
 
 
 func _physics_process(delta: float) -> void:
@@ -442,6 +445,7 @@ func take_damage(amount: int, source_position: Vector2) -> void:
 		return
 
 	health = maxi(health - amount, 0)
+	health_changed.emit(health, max_health)
 	print("Player health: %d/%d" % [health, max_health])
 
 	if health == 0:
@@ -511,7 +515,12 @@ func die() -> void:
 		return
 
 	is_dead = true
-	health = 0
+	
+	# Direct deaths, such as falling, also update health listeners.
+	if health != 0:
+		health = 0
+		health_changed.emit(health, max_health)
+
 	respawn_timer = -1.0
 	velocity = Vector2.ZERO
 
@@ -550,6 +559,7 @@ func respawn() -> void:
 	global_position = spawn_position
 	velocity = Vector2.ZERO
 	health = max_health
+	health_changed.emit(health, max_health)
 	is_dead = false
 	respawn_timer = -1.0
 

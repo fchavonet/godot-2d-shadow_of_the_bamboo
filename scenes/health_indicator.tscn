@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://daay48knkxshf"]
+
+[ext_resource type="Script" uid="uid://du0tisu1jfhv6" path="res://scripts/health_indicator.gd" id="1_iqnyi"]
+
+[node name="HealthIndicator" type="Node2D" unique_id=1750441038]
+z_index = 10
+texture_filter = 1
+script = ExtResource("1_iqnyi")

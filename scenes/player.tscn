@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://dhcwuc2wuhug1" path="res://assets/player/jump.png" id="4_tuyoq"]
 [ext_resource type="Texture2D" uid="uid://y7me4i5bbndi" path="res://assets/player/roll.png" id="7_smehm"]
 [ext_resource type="Texture2D" uid="uid://d2w3rcj83jai1" path="res://assets/player/wall_slide.png" id="10_y4r1p"]
+[ext_resource type="PackedScene" uid="uid://daay48knkxshf" path="res://scenes/health_indicator.tscn" id="12_3v2ag"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_8svfe"]
 atlas = ExtResource("2_d2wvv")
@@ -565,6 +566,9 @@ monitorable = false
 position = Vector2(18, -8)
 shape = SubResource("RectangleShape2D_jieny")
 
+[node name="HealthAnchor" type="Marker2D" parent="Visuals" unique_id=951761321]
+position = Vector2(1, -21)
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1247564155]
 position = Vector2(0, -8)
 shape = SubResource("CapsuleShape2D_d2wvv")
@@ -577,3 +581,8 @@ monitoring = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=1553181001]
 position = Vector2(0, -8)
 shape = SubResource("CapsuleShape2D_jieny")
+
+[node name="HealthIndicator" parent="." unique_id=1750441038 node_paths=PackedStringArray("anchor") instance=ExtResource("12_3v2ag")]
+position = Vector2(1, -21)
+block_size = 2
+anchor = NodePath("../Visuals/HealthAnchor")
