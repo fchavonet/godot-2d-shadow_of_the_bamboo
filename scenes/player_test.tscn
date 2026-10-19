@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://p8b5xeed1xn2"]
 
 [ext_resource type="PackedScene" uid="uid://bl7p85b67cbqt" path="res://scenes/player.tscn" id="1_a8v3n"]
+[ext_resource type="PackedScene" uid="uid://bbi8v2nv45h75" path="res://scenes/training_dummy.tscn" id="2_fdpfy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
 size = Vector2(320, 20)
@@ -16,10 +17,13 @@ offset_top = -10.0
 offset_right = 160.0
 offset_bottom = 10.0
 mouse_filter = 2
-color = Color(0, 0, 0, 1)
+color = Color(0.043137256, 0.043137256, 0.043137256, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1869337854]
 shape = SubResource("RectangleShape2D_jieny")
+
+[node name="TrainingDummy" parent="." unique_id=675501490 instance=ExtResource("2_fdpfy")]
+position = Vector2(230, 160)
 
 [node name="Player" parent="." unique_id=1105530384 instance=ExtResource("1_a8v3n")]
 position = Vector2(161, 132)
