@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://ce8rrbggen1rf" path="res://scripts/player.gd" id="1_qhqgy"]
 [ext_resource type="Texture2D" uid="uid://bw2ux32vdv6lf" path="res://assets/player/good/run.png" id="2_g2els"]
 [ext_resource type="Texture2D" uid="uid://cqeipj2fhw5fu" path="res://assets/player/good/fall.png" id="2_qlg0r"]
+[ext_resource type="Texture2D" uid="uid://c5su53i0o16wo" path="res://assets/player/good/glide.png" id="3_tuyoq"]
 [ext_resource type="Texture2D" uid="uid://domadyi0hg0xp" path="res://assets/player/good/jump.png" id="4_tuyoq"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4r5pv"]
@@ -20,6 +21,22 @@ region = Rect2(206, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_a38lo"]
 atlas = ExtResource("2_qlg0r")
+region = Rect2(309, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_31cv2"]
+atlas = ExtResource("3_tuyoq")
+region = Rect2(0, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pf23h"]
+atlas = ExtResource("3_tuyoq")
+region = Rect2(103, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dt7fs"]
+atlas = ExtResource("3_tuyoq")
+region = Rect2(206, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wqfne"]
+atlas = ExtResource("3_tuyoq")
 region = Rect2(309, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_g2els"]
@@ -127,6 +144,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_31cv2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pf23h")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dt7fs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wqfne")
+}],
+"loop": 1,
+"name": &"glide",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_g2els")
 }, {
 "duration": 1.0,
@@ -216,7 +250,7 @@ script = ExtResource("1_qhqgy")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals" unique_id=730011078]
 position = Vector2(8.5, -12.5)
 sprite_frames = SubResource("SpriteFrames_nfwyi")
-animation = &"fall"
+animation = &"glide"
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=382385470]

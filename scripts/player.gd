@@ -9,8 +9,15 @@ extends CharacterBody2D
 @export_range(0.0, 0.3, 0.01) var jump_coyote_time: float = 0.1
 @export_range(0.0, 0.3, 0.01) var jump_buffer_time: float = 0.1
 
+@export_group("Glide")
+@export_range(0.0, 1.0, 0.01) var glide_hold_time: float = 0.2
+@export_range(1.0, 300.0, 1.0) var glide_fall_speed: float = 60.0
+
 var jump_coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
+
+var glide_hold_timer: float = 0.0
+var is_gliding: bool = false
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
@@ -35,7 +42,7 @@ func _physics_process(delta: float) -> void:
 	var jumped_this_frame := false
 
 	if wants_to_jump and can_jump:
-		velocity.y = -jump_speed
+		velocity.y = - jump_speed
 		jump_coyote_timer = 0.0
 		jump_buffer_timer = 0.0
 		jumped_this_frame = true
@@ -50,6 +57,22 @@ func _physics_process(delta: float) -> void:
 	):
 		velocity.y *= jump_cut_multiplier
 
+	is_gliding = false
+
+	if Input.is_action_pressed("jump") and not is_on_floor():
+		glide_hold_timer += delta
+	else:
+		glide_hold_timer = 0.0
+
+	if (
+		not is_on_floor()
+		and velocity.y > 0.0
+		and Input.is_action_pressed("jump")
+		and glide_hold_timer >= glide_hold_time
+	):
+		is_gliding = true
+		velocity.y = minf(velocity.y, glide_fall_speed)
+
 	var direction := Input.get_axis("move_left", "move_right")
 	velocity.x = direction * move_speed
 
@@ -62,7 +85,9 @@ func _physics_process(delta: float) -> void:
 
 func update_animation(direction: float) -> void:
 	if not is_on_floor():
-		if velocity.y < 0.0:
+		if is_gliding:
+			animated_sprite.play("glide")
+		elif velocity.y < 0.0:
 			animated_sprite.play("jump")
 		else:
 			animated_sprite.play("fall")
