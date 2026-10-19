@@ -10,15 +10,15 @@ size = Vector2(320, 20)
 [node name="Ground" type="StaticBody2D" parent="." unique_id=1002572673]
 position = Vector2(160, 170)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1869337854]
-shape = SubResource("RectangleShape2D_jieny")
-
 [node name="ColorRect" type="ColorRect" parent="Ground" unique_id=1354774494]
 offset_left = -160.0
 offset_top = -10.0
 offset_right = 160.0
 offset_bottom = 10.0
 mouse_filter = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1869337854]
+shape = SubResource("RectangleShape2D_jieny")
 
 [node name="Player" parent="." unique_id=1105530384 instance=ExtResource("1_a8v3n")]
 position = Vector2(161, 132)
