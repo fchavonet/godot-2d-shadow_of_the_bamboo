@@ -389,9 +389,8 @@ script = ExtResource("1_qhqgy")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals" unique_id=730011078]
 position = Vector2(8.5, -12.5)
 sprite_frames = SubResource("SpriteFrames_nfwyi")
-animation = &"attack_3"
+animation = &"idle"
 autoplay = "idle"
-frame = 7
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=1347239026]
 collision_layer = 0

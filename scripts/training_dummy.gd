@@ -3,14 +3,18 @@ extends Node2D
 signal health_changed(current: int, maximum: int)
 signal died
 
+const DAMAGE_NUMBER_SCENE: PackedScene = preload(
+	"res://scenes/damage_number.tscn"
+)
+
 @export_group("Health")
 @export_range(1, 1000, 1) var max_health: int = 10
 
 @export_group("Feedback")
 @export_range(0.01, 0.5, 0.01) var hit_flash_duration: float = 0.1
+@export var damage_number_offset: Vector2 = Vector2(0.0, -28.0)
 
 var health: int = 0
-var hit_count: int = 0
 var hit_flash_timer: float = 0.0
 var is_dead: bool = false
 
@@ -38,14 +42,10 @@ func receive_hit(damage: int) -> void:
 	if is_dead or damage <= 0:
 		return
 
-	hit_count += 1
 	health = maxi(health - damage, 0)
-	health_changed.emit(health, max_health)
 
-	print(
-		"%s | Hit count: %d | Health: %d/%d"
-		% [name, hit_count, health, max_health]
-	)
+	show_damage_number(damage)
+	health_changed.emit(health, max_health)
 
 	if health == 0:
 		die()
@@ -55,13 +55,20 @@ func receive_hit(damage: int) -> void:
 	visual.color = Color.WHITE
 
 
+func show_damage_number(amount: int) -> void:
+	var damage_number := DAMAGE_NUMBER_SCENE.instantiate() as Node2D
+
+	# Keep the number alive even when the target is removed.
+	get_tree().current_scene.add_child(damage_number)
+
+	damage_number.global_position = global_position + damage_number_offset
+	damage_number.display(amount)
+
+
 func die() -> void:
 	if is_dead:
 		return
 
 	is_dead = true
 	died.emit()
-
-	print("%s | Defeated" % name)
-
 	queue_free()
