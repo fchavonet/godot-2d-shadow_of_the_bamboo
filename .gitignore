@@ -1,0 +1,9 @@
+# Godot
+.godot/
+/android/
+
+# Editors
+.vscode/
+
+# System files
+.DS_Store
