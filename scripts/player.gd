@@ -19,8 +19,14 @@ var jump_buffer_timer: float = 0.0
 var glide_hold_timer: float = 0.0
 var is_gliding: bool = false
 
+var is_attacking: bool = false
+
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
+
+
+func _ready() -> void:
+	animated_sprite.animation_finished.connect(_on_animation_finished)
 
 
 func _physics_process(delta: float) -> void:
@@ -41,7 +47,7 @@ func _physics_process(delta: float) -> void:
 	var can_jump := is_on_floor() or jump_coyote_timer > 0.0
 	var jumped_this_frame := false
 
-	if wants_to_jump and can_jump:
+	if wants_to_jump and can_jump and not is_attacking:
 		velocity.y = - jump_speed
 		jump_coyote_timer = 0.0
 		jump_buffer_timer = 0.0
@@ -69,21 +75,39 @@ func _physics_process(delta: float) -> void:
 		and velocity.y > 0.0
 		and Input.is_action_pressed("jump")
 		and glide_hold_timer >= glide_hold_time
+		and not is_attacking
 	):
 		is_gliding = true
 		velocity.y = minf(velocity.y, glide_fall_speed)
 
-	var direction := Input.get_axis("move_left", "move_right")
-	velocity.x = direction * move_speed
+	if Input.is_action_just_pressed("attack") and not is_attacking:
+		is_attacking = true
+		is_gliding = false
+		glide_hold_timer = 0.0
+		jump_buffer_timer = 0.0
+		animated_sprite.play("attack")
 
-	if direction != 0.0:
-		visuals.scale.x = signf(direction)
+	var direction := Input.get_axis("move_left", "move_right")
+
+	if is_attacking:
+		jump_buffer_timer = 0.0
+
+		if is_on_floor():
+			velocity.x = 0.0
+	else:
+		velocity.x = direction * move_speed
+
+		if direction != 0.0:
+			visuals.scale.x = signf(direction)
 
 	move_and_slide()
 	update_animation(direction)
 
 
 func update_animation(direction: float) -> void:
+	if is_attacking:
+		return
+
 	if not is_on_floor():
 		if is_gliding:
 			animated_sprite.play("glide")
@@ -95,3 +119,8 @@ func update_animation(direction: float) -> void:
 		animated_sprite.play("run")
 	else:
 		animated_sprite.play("idle")
+
+
+func _on_animation_finished() -> void:
+	if animated_sprite.animation == &"attack":
+		is_attacking = false
