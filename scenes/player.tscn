@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://j2vus2kqv3xe" path="res://assets/player/good/jabs.png" id="3_smehm"]
 [ext_resource type="Texture2D" uid="uid://c5su53i0o16wo" path="res://assets/player/good/glide.png" id="3_tuyoq"]
 [ext_resource type="Texture2D" uid="uid://domadyi0hg0xp" path="res://assets/player/good/jump.png" id="4_tuyoq"]
+[ext_resource type="Texture2D" uid="uid://df5qbduloyjxg" path="res://assets/player/good/roll.png" id="8_ur7pv"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_wnwbv"]
 atlas = ExtResource("2_fjrip")
@@ -159,6 +160,22 @@ region = Rect2(206, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ujl30"]
 atlas = ExtResource("4_tuyoq")
+region = Rect2(309, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4gjji"]
+atlas = ExtResource("8_ur7pv")
+region = Rect2(0, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u2ulf"]
+atlas = ExtResource("8_ur7pv")
+region = Rect2(103, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6e8lb"]
+atlas = ExtResource("8_ur7pv")
+region = Rect2(206, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2gdjj"]
+atlas = ExtResource("8_ur7pv")
 region = Rect2(309, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_d2wvv"]
@@ -346,6 +363,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_4gjji")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u2ulf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6e8lb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2gdjj")
+}],
+"loop": 0,
+"name": &"roll",
+"speed": 16.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_d2wvv")
 }, {
 "duration": 1.0,
@@ -389,7 +423,7 @@ script = ExtResource("1_qhqgy")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals" unique_id=730011078]
 position = Vector2(8.5, -12.5)
 sprite_frames = SubResource("SpriteFrames_nfwyi")
-animation = &"idle"
+animation = &"roll"
 autoplay = "idle"
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=1347239026]

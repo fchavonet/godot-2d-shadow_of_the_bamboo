@@ -9,7 +9,7 @@ const ATTACK_ANIMATIONS: Array[StringName] = [
 const ATTACK_ACTIVE_FRAMES: Array[Vector2i] = [
 	Vector2i(1, 2),
 	Vector2i(0, 1),
-	Vector2i(0, 4),
+	Vector2i(3, 7),
 ]
 
 const ATTACK_THREE_HIT_FRAMES: Array[int] = [3, 5, 7]
@@ -25,6 +25,9 @@ const ATTACK_SIZES: Array[Vector2] = [
 	Vector2(30.0, 16.0),
 	Vector2(40.5, 16.0),
 ]
+
+const ROLL_HITBOX_POSITION := Vector2(0.0, -8.0)
+const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 
 const HURTBOX_COLLISION_MASK: int = 2
 const MAX_HIT_QUERY_RESULTS: int = 32
@@ -43,6 +46,10 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(0.0, 1.0, 0.01) var glide_hold_time: float = 0.2
 @export_range(1.0, 300.0, 1.0) var glide_fall_speed: float = 60.0
 
+@export_group("Roll")
+@export var roll_speed: float = 180.0
+@export_range(1, 100, 1) var roll_damage: int = 1
+
 @export_group("Combat")
 @export_range(1, 100, 1) var attack_damage: int = 1
 
@@ -52,6 +59,10 @@ var jump_buffer_timer: float = 0.0
 
 var glide_hold_timer: float = 0.0
 var is_gliding: bool = false
+
+var is_rolling: bool = false
+var roll_direction: float = 1.0
+var has_air_rolled: bool = false
 
 var is_attacking: bool = false
 var is_air_attack: bool = false
@@ -64,7 +75,9 @@ var attack_hit_targets: Array[int] = []
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
-@onready var attack_collision: CollisionShape2D = ($Visuals/AttackHitbox/CollisionShape2D)
+@onready var attack_collision: CollisionShape2D = (
+	$Visuals/AttackHitbox/CollisionShape2D
+)
 
 
 func _ready() -> void:
@@ -80,9 +93,19 @@ func _physics_process(delta: float) -> void:
 
 	if grounded:
 		jump_coyote_timer = jump_coyote_time
+		has_air_rolled = false
 	else:
 		jump_coyote_timer = maxf(jump_coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
+
+	update_roll_input(grounded)
+
+	if is_rolling:
+		update_roll()
+		move_and_slide()
+		update_roll_hitbox()
+		apply_hit_damage(roll_damage)
+		return
 
 	var jumped_this_frame := update_jump(delta, grounded)
 
@@ -101,6 +124,8 @@ func _physics_process(delta: float) -> void:
 	update_attack_hitbox()
 	check_attack_hits()
 
+
+# Jump and glide
 
 func update_jump(delta: float, grounded: bool) -> bool:
 	jump_buffer_timer = maxf(jump_buffer_timer - delta, 0.0)
@@ -173,6 +198,67 @@ func update_horizontal_movement(direction: float, grounded: bool) -> void:
 		visuals.scale.x = signf(direction)
 
 
+# Roll
+
+func update_roll_input(grounded: bool) -> void:
+	if not Input.is_action_just_pressed("roll"):
+		return
+
+	if is_rolling or is_attacking:
+		return
+
+	if not grounded and has_air_rolled:
+		return
+
+	start_roll(not grounded)
+
+
+func start_roll(air_roll: bool) -> void:
+	is_rolling = true
+	roll_direction = signf(visuals.scale.x)
+
+	if air_roll:
+		has_air_rolled = true
+
+	is_gliding = false
+	glide_hold_timer = 0.0
+	jump_buffer_timer = 0.0
+	jump_coyote_timer = 0.0
+
+	attack_hit_phase = -1
+	attack_hit_targets.clear()
+
+	animated_sprite.play("roll")
+
+
+func update_roll() -> void:
+	jump_coyote_timer = 0.0
+	jump_buffer_timer = 0.0
+	glide_hold_timer = 0.0
+	is_gliding = false
+
+	velocity.x = roll_direction * roll_speed
+
+
+func update_roll_hitbox() -> void:
+	attack_collision.position = ROLL_HITBOX_POSITION
+
+	var attack_shape := attack_collision.shape as RectangleShape2D
+	attack_shape.size = ROLL_HITBOX_SIZE
+
+	attack_collision.set_deferred("disabled", false)
+
+
+func finish_roll() -> void:
+	is_rolling = false
+	attack_hit_phase = -1
+	attack_hit_targets.clear()
+
+	attack_collision.set_deferred("disabled", true)
+
+
+# Attack and combo
+
 func update_attack_input(grounded: bool) -> void:
 	if not Input.is_action_just_pressed("attack"):
 		return
@@ -215,6 +301,8 @@ func finish_attack() -> void:
 
 	attack_collision.set_deferred("disabled", true)
 
+
+# Hit detection
 
 func is_attack_hit_active() -> bool:
 	if not is_attacking:
@@ -261,6 +349,10 @@ func check_attack_hits() -> void:
 		attack_hit_phase = current_phase
 		attack_hit_targets.clear()
 
+	apply_hit_damage(attack_damage)
+
+
+func apply_hit_damage(damage: int) -> void:
 	# Query the current shape directly after movement and resizing.
 	var query := PhysicsShapeQueryParameters2D.new()
 	query.shape = attack_collision.shape
@@ -288,13 +380,15 @@ func check_attack_hits() -> void:
 		if attack_hit_targets.has(target_id):
 			continue
 
-		# Record the target before calling it to prevent duplicate hits.
+		# Each target can receive damage once per impact.
 		attack_hit_targets.append(target_id)
-		target.call("receive_hit", attack_damage)
+		target.call("receive_hit", damage)
 
+
+# Animation
 
 func update_animation(direction: float) -> void:
-	if is_attacking:
+	if is_attacking or is_rolling:
 		return
 
 	if not is_on_floor():
@@ -311,6 +405,10 @@ func update_animation(direction: float) -> void:
 
 
 func _on_animation_finished() -> void:
+	if animated_sprite.animation == &"roll":
+		finish_roll()
+		return
+
 	if not is_attacking:
 		return
 
