@@ -12,6 +12,8 @@ const ATTACK_ACTIVE_FRAMES: Array[Vector2i] = [
 	Vector2i(0, 4),
 ]
 
+const ATTACK_THREE_HIT_FRAMES: Array[int] = [3, 5, 7]
+
 const ATTACK_POSITIONS: Array[Vector2] = [
 	Vector2(18.0, -8.0),
 	Vector2(20.5, -8.0),
@@ -41,6 +43,9 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(0.0, 1.0, 0.01) var glide_hold_time: float = 0.2
 @export_range(1.0, 300.0, 1.0) var glide_fall_speed: float = 60.0
 
+@export_group("Combat")
+@export_range(1, 100, 1) var attack_damage: int = 1
+
 
 var jump_coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
@@ -59,9 +64,7 @@ var attack_hit_targets: Array[int] = []
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
-@onready var attack_collision: CollisionShape2D = (
-	$Visuals/AttackHitbox/CollisionShape2D
-)
+@onready var attack_collision: CollisionShape2D = ($Visuals/AttackHitbox/CollisionShape2D)
 
 
 func _ready() -> void:
@@ -220,8 +223,12 @@ func is_attack_hit_active() -> bool:
 	if animated_sprite.animation != ATTACK_ANIMATIONS[attack_combo_index]:
 		return false
 
-	var active_frames := ATTACK_ACTIVE_FRAMES[attack_combo_index]
 	var current_frame := animated_sprite.frame
+
+	if attack_combo_index == 2:
+		return ATTACK_THREE_HIT_FRAMES.has(current_frame)
+
+	var active_frames := ATTACK_ACTIVE_FRAMES[attack_combo_index]
 
 	return (
 		current_frame >= active_frames.x
@@ -245,12 +252,8 @@ func check_attack_hits() -> void:
 
 	var impact_index: int = 0
 
-	# The third attack has three impacts, starting at frames 0, 2 and 4.
 	if attack_combo_index == 2:
-		if animated_sprite.frame >= 4:
-			impact_index = 2
-		elif animated_sprite.frame >= 2:
-			impact_index = 1
+		impact_index = ATTACK_THREE_HIT_FRAMES.find(animated_sprite.frame)
 
 	var current_phase := attack_combo_index * 3 + impact_index
 
@@ -287,7 +290,7 @@ func check_attack_hits() -> void:
 
 		# Record the target before calling it to prevent duplicate hits.
 		attack_hit_targets.append(target_id)
-		target.call("receive_hit")
+		target.call("receive_hit", attack_damage)
 
 
 func update_animation(direction: float) -> void:
