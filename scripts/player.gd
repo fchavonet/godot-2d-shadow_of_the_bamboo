@@ -1,5 +1,11 @@
 extends CharacterBody2D
 
+const ATTACK_ANIMATIONS: Array[StringName] = [
+	&"attack_1",
+	&"attack_2",
+	&"attack_3",
+]
+
 @export_group("Movement")
 @export var move_speed: float = 90.0
 
@@ -20,6 +26,9 @@ var glide_hold_timer: float = 0.0
 var is_gliding: bool = false
 
 var is_attacking: bool = false
+var is_air_attack: bool = false
+var attack_combo_index: int = 0
+var attack_queued: bool = false
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
@@ -30,7 +39,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if is_on_floor():
+	var grounded := is_on_floor() and velocity.y >= 0.0
+
+	if grounded:
 		jump_coyote_timer = jump_coyote_time
 	else:
 		jump_coyote_timer = maxf(jump_coyote_timer - delta, 0.0)
@@ -44,7 +55,7 @@ func _physics_process(delta: float) -> void:
 		jump_buffer_timer = jump_buffer_time
 
 	var wants_to_jump := jump_pressed or jump_buffer_timer > 0.0
-	var can_jump := is_on_floor() or jump_coyote_timer > 0.0
+	var can_jump := grounded or jump_coyote_timer > 0.0
 	var jumped_this_frame := false
 
 	if wants_to_jump and can_jump and not is_attacking:
@@ -52,6 +63,7 @@ func _physics_process(delta: float) -> void:
 		jump_coyote_timer = 0.0
 		jump_buffer_timer = 0.0
 		jumped_this_frame = true
+		grounded = false
 
 		if not Input.is_action_pressed("jump"):
 			velocity.y *= jump_cut_multiplier
@@ -65,13 +77,17 @@ func _physics_process(delta: float) -> void:
 
 	is_gliding = false
 
-	if Input.is_action_pressed("jump") and not is_on_floor():
+	if (
+		Input.is_action_pressed("jump")
+		and not grounded
+		and not is_attacking
+	):
 		glide_hold_timer += delta
 	else:
 		glide_hold_timer = 0.0
 
 	if (
-		not is_on_floor()
+		not grounded
 		and velocity.y > 0.0
 		and Input.is_action_pressed("jump")
 		and glide_hold_timer >= glide_hold_time
@@ -80,19 +96,22 @@ func _physics_process(delta: float) -> void:
 		is_gliding = true
 		velocity.y = minf(velocity.y, glide_fall_speed)
 
-	if Input.is_action_just_pressed("attack") and not is_attacking:
-		is_attacking = true
-		is_gliding = false
-		glide_hold_timer = 0.0
-		jump_buffer_timer = 0.0
-		animated_sprite.play("attack")
+	if Input.is_action_just_pressed("attack"):
+		if not is_attacking:
+			start_attack(not grounded)
+		elif (
+			grounded
+			and not is_air_attack
+			and attack_combo_index < ATTACK_ANIMATIONS.size() - 1
+		):
+			attack_queued = true
 
 	var direction := Input.get_axis("move_left", "move_right")
 
 	if is_attacking:
 		jump_buffer_timer = 0.0
 
-		if is_on_floor():
+		if grounded:
 			velocity.x = 0.0
 	else:
 		velocity.x = direction * move_speed
@@ -102,6 +121,27 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	update_animation(direction)
+
+
+func start_attack(air_attack: bool) -> void:
+	is_attacking = true
+	is_air_attack = air_attack
+	attack_combo_index = 0
+	attack_queued = false
+
+	is_gliding = false
+	glide_hold_timer = 0.0
+	jump_buffer_timer = 0.0
+	jump_coyote_timer = 0.0
+
+	animated_sprite.play(ATTACK_ANIMATIONS[attack_combo_index])
+
+
+func finish_attack() -> void:
+	is_attacking = false
+	is_air_attack = false
+	attack_combo_index = 0
+	attack_queued = false
 
 
 func update_animation(direction: float) -> void:
@@ -122,5 +162,20 @@ func update_animation(direction: float) -> void:
 
 
 func _on_animation_finished() -> void:
-	if animated_sprite.animation == &"attack":
-		is_attacking = false
+	if not is_attacking:
+		return
+
+	if animated_sprite.animation != ATTACK_ANIMATIONS[attack_combo_index]:
+		return
+
+	if (
+		attack_queued
+		and not is_air_attack
+		and is_on_floor()
+		and attack_combo_index < ATTACK_ANIMATIONS.size() - 1
+	):
+		attack_combo_index += 1
+		attack_queued = false
+		animated_sprite.play(ATTACK_ANIMATIONS[attack_combo_index])
+	else:
+		finish_attack()

@@ -16,6 +16,7 @@ offset_top = -10.0
 offset_right = 160.0
 offset_bottom = 10.0
 mouse_filter = 2
+color = Color(0, 0, 0, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1869337854]
 shape = SubResource("RectangleShape2D_jieny")
