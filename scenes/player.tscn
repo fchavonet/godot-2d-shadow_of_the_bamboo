@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://domadyi0hg0xp" path="res://assets/player/good/jump.png" id="4_tuyoq"]
 [ext_resource type="Texture2D" uid="uid://df5qbduloyjxg" path="res://assets/player/good/roll.png" id="8_ur7pv"]
 [ext_resource type="Texture2D" uid="uid://dfndvu26kpba0" path="res://assets/player/good/wall_slide.png" id="10_y4r1p"]
+[ext_resource type="Script" uid="uid://dpt524x4nyqoi" path="res://scripts/player_health_bar.gd" id="12_3v2ag"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_wnwbv"]
 atlas = ExtResource("2_fjrip")
@@ -549,6 +550,10 @@ monitorable = false
 position = Vector2(18, -8)
 shape = SubResource("RectangleShape2D_jieny")
 disabled = true
+
+[node name="HealthBar" type="Node2D" parent="." unique_id=950798627]
+position = Vector2(0, -20)
+script = ExtResource("12_3v2ag")
 
 [node name="Hurtbox" type="Area2D" parent="." unique_id=1019010706]
 collision_layer = 2
