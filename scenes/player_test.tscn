@@ -16,6 +16,7 @@ size = Vector2(16, 100)
 
 [node name="DeathZone" parent="." unique_id=615691188 instance=ExtResource("1_2ue4q")]
 position = Vector2(160, 212)
+death_animation = true
 
 [node name="Ground" type="StaticBody2D" parent="." unique_id=1002572673]
 position = Vector2(160, 170)
@@ -84,8 +85,9 @@ position = Vector2(226, 160)
 damage_number_offset = Vector2(0, -22)
 
 [node name="DamageZone" parent="." unique_id=998854952 instance=ExtResource("2_6p80c")]
-position = Vector2(268, 160)
+position = Vector2(268, 159)
 priority = 2
+death_animation = true
 damage = 2
 
 [node name="Player" parent="." unique_id=1105530384 instance=ExtResource("1_a8v3n")]

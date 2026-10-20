@@ -53,6 +53,7 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 
 @export_group("Respawn")
 @export var auto_respawn: bool = true
+@export_range(0.0, 2.0, 0.05) var instant_death_respawn_delay: float = 0.3
 @export_range(1.0, 15.0, 0.5) var death_fall_timeout: float = 5.0
 @export_range(0.0, 5.0, 0.05) var respawn_delay: float = 0.8
 @export_range(0.0, 5.0, 0.05) var respawn_invulnerability_time: float = 1.0
@@ -89,6 +90,8 @@ var hurt_invulnerability_timer: float = 0.0
 var hurt_control_timer: float = 0.0
 var hurt_flash_timer: float = 0.0
 var is_dead: bool = false
+var is_environmental_death: bool = false
+var saved_camera_process_mode: ProcessMode = Node.PROCESS_MODE_INHERIT
 var death_animation_finished: bool = false
 var death_fall_timer: float = 0.0
 var respawn_timer: float = 0.0
@@ -119,6 +122,7 @@ var attack_hit_phase: int = -1
 var attack_hit_targets: Array[int] = []
 
 
+@onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
 @onready var sprite_base_modulate: Color = animated_sprite.modulate
@@ -589,6 +593,8 @@ func _on_animation_finished() -> void:
 	if is_dead:
 		if animated_sprite.animation == &"death":
 			death_animation_finished = true
+			if is_environmental_death:
+				hide()
 		return
 
 	if hurt_control_timer > 0.0:
@@ -618,15 +624,54 @@ func _on_animation_finished() -> void:
 
 # Health and damage
 
-func receive_fatal_hit(source_position: Vector2 = Vector2.INF) -> void:
-	if is_dead or current_health <= 0:
+func receive_fatal_hit(
+	_source_position: Vector2 = Vector2.INF,
+	death_animation: bool = false
+) -> void:
+	if is_environmental_death:
 		return
 
-	# Environmental death bypasses roll and damage invulnerability.
+	# A death zone also takes over a body falling after a combat death.
+	var was_dead := is_dead
+	var applied_damage := current_health
+	is_dead = true
+	is_environmental_death = true
+	current_health = 0
 	reset_action_state()
+	velocity = Vector2.ZERO
+	hurt_control_timer = 0.0
 	hurt_invulnerability_timer = 0.0
+	hurt_flash_timer = 0.0
+	death_fall_timer = 0.0
+	death_animation_finished = true
+	respawn_timer = instant_death_respawn_delay
+	animated_sprite.stop()
+	animated_sprite.modulate = sprite_base_modulate
 
-	receive_hit(current_health, source_position)
+	if (
+		death_animation
+		and animated_sprite.sprite_frames.has_animation(&"death")
+		and animated_sprite.sprite_frames.get_frame_count(&"death") > 0
+		and not animated_sprite.sprite_frames.get_animation_loop(&"death")
+	):
+		death_animation_finished = false
+		show()
+		visuals.show()
+		animated_sprite.play(&"death")
+	else:
+		# Invalid or looping death animations fall back to instant disappearance.
+		hide()
+
+	# Freeze camera updates without disabling the active camera.
+	if player_camera != null:
+		saved_camera_process_mode = player_camera.process_mode
+		player_camera.process_mode = Node.PROCESS_MODE_DISABLED
+
+	health_changed.emit(current_health, max_health)
+	if applied_damage > 0:
+		damaged.emit(applied_damage)
+	if not was_dead:
+		died.emit()
 
 
 func receive_hit(damage: int, source_position: Vector2 = Vector2.INF) -> void:
@@ -722,6 +767,17 @@ func die() -> void:
 
 
 func update_death_movement(delta: float) -> void:
+	if is_environmental_death:
+		# Stay in place until the animation ends, then start the respawn delay.
+		if not death_animation_finished:
+			return
+		hide()
+		if auto_respawn:
+			respawn_timer = maxf(respawn_timer - delta, 0.0)
+			if respawn_timer <= 0.0:
+				respawn()
+		return
+
 	# Keep physical collisions and gravity active while controls are blocked.
 	if is_on_floor() and velocity.y >= 0.0:
 		velocity.x = 0.0
@@ -756,6 +812,8 @@ func set_respawn_position(new_position: Vector2) -> void:
 
 
 func respawn() -> void:
+	var restore_camera := is_environmental_death
+	is_environmental_death = false
 	reset_action_state()
 	global_position = respawn_position
 	reset_physics_interpolation()
@@ -775,3 +833,11 @@ func respawn() -> void:
 	update_hurt_visual()
 	health_changed.emit(current_health, max_health)
 	respawned.emit()
+	show()
+
+	if restore_camera and player_camera != null:
+		player_camera.process_mode = saved_camera_process_mode
+		# Recenter immediately instead of scrolling back from the death zone.
+		player_camera.align()
+		player_camera.reset_smoothing()
+		player_camera.force_update_scroll()

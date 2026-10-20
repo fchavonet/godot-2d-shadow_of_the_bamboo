@@ -3,6 +3,7 @@ extends Area2D
 @export_group("Damage")
 @export var enabled: bool = true
 @export var instant_kill: bool = false
+@export var death_animation: bool = false
 @export_range(1, 1000, 1) var damage: int = 1
 
 
@@ -27,6 +28,6 @@ func _physics_process(_delta: float) -> void:
 
 		if instant_kill:
 			if target.has_method("receive_fatal_hit"):
-				target.call("receive_fatal_hit", global_position)
+				target.call("receive_fatal_hit", global_position, death_animation)
 		elif target.has_method("receive_hit"):
 			target.call("receive_hit", damage, global_position)
