@@ -11,6 +11,31 @@ signal evil_mode_changed(active: bool)
 const GOOD_SPRITE_FRAMES: SpriteFrames = preload("res://assets/player/good/good_frames.tres")
 const EVIL_SPRITE_FRAMES: SpriteFrames = preload("res://assets/player/evil/evil_frames.tres")
 
+const PROTECTOR_SPRITE_FRAMES: SpriteFrames = preload(
+	"res://assets/player/protector/protector_frames.tres"
+)
+const PROTECTOR_SPRITE_POSITION := Vector2(32.5, -17.5)
+const PROTECTOR_BODY_POSITION := Vector2(0.0, -16.0)
+const PROTECTOR_UI_OFFSET := Vector2(12.0, -18.0)
+# Head movement relative to the first frame of Protector idle.
+const PROTECTOR_IDLE_UI_OFFSETS: Array[float] = [
+	0.0, 0.0, 0.0, -1.0, -2.0, -3.0,
+	-4.0, -4.0, -4.0, -3.0, -2.0, -1.0,
+]
+# Walk uses the same reference height as Protector idle.
+const PROTECTOR_WALK_UI_OFFSETS: Array[float] = [
+	-1.0, 0.0, -1.0, -2.0, -3.0, -2.0,
+	-1.0, 0.0, -1.0, -2.0, -3.0, -2.0,
+]
+# Good and Evil share the same head movement, relative to idle frame zero.
+const SMALL_IDLE_UI_OFFSETS: Array[float] = [
+	0.0, -1.0, -1.0, -1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+]
+const SMALL_RUN_UI_OFFSETS: Array[float] = [
+	2.0, 1.0, -1.0, 0.0, 2.0, 1.0, -1.0, 0.0,
+]
+const TRANSFORM_FLASH_FRAME: int = 2
+
 const ATTACK_ANIMATIONS: Array[StringName] = [
 	&"attack_1",
 	&"attack_2",
@@ -76,6 +101,14 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_group("Evil Mode")
 @export_range(0.1, 120.0, 0.1) var evil_duration: float = 10.0
 
+@export_group("Protector")
+@export_range(1.0, 300.0, 1.0) var protector_move_speed: float = 55.0
+
+@export_group("Transformation Flash")
+@export_range(0.5, 4.0, 0.1) var transform_flash_scale: float = 1.5
+@export_range(0.0, 0.3, 0.01) var transform_flash_hold: float = 0.06
+@export_range(0.01, 0.3, 0.01) var transform_flash_fade: float = 0.1
+
 @export_group("Movement")
 @export var move_speed: float = 90.0
 
@@ -101,6 +134,19 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_group("Combat")
 @export_range(1, 100, 1) var attack_damage: int = 1
 
+
+var is_protector: bool = false
+var is_transforming: bool = false
+var is_reverting: bool = false
+var revert_animation_finished: bool = false
+var transform_flash_timer: float = 0.0
+var transform_flash: Sprite2D
+var small_body_shape: Shape2D
+var small_hurtbox_shape: Shape2D
+var small_body_position: Vector2
+var small_hurtbox_position: Vector2
+var small_ui_position: Vector2
+var protector_shape: CapsuleShape2D
 
 var is_evil: bool = false
 var evil_timer: float = 0.0
@@ -147,6 +193,9 @@ var attack_hit_phase: int = -1
 var attack_hit_targets: Array[int] = []
 
 
+@onready var body_collision: CollisionShape2D = $CollisionShape2D
+@onready var hurtbox_collision: CollisionShape2D = $Hurtbox/CollisionShape2D
+@onready var player_ui: Node2D = $UI
 @onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
@@ -158,6 +207,23 @@ var attack_hit_targets: Array[int] = []
 
 
 func _ready() -> void:
+	small_body_shape = body_collision.shape
+	small_hurtbox_shape = hurtbox_collision.shape
+	small_body_position = body_collision.position
+	small_hurtbox_position = hurtbox_collision.position
+	small_ui_position = player_ui.position
+	protector_shape = CapsuleShape2D.new()
+	protector_shape.radius = 12.0
+	protector_shape.height = 32.0
+
+	# A separate flash can cover the switch to the larger sprite.
+	transform_flash = Sprite2D.new()
+	transform_flash.name = &"TransformFlash"
+	transform_flash.position = sprite_base_position
+	transform_flash.z_index = 1
+	transform_flash.hide()
+	visuals.add_child(transform_flash)
+
 	animated_sprite.sprite_frames = GOOD_SPRITE_FRAMES
 	animated_sprite.play(&"idle")
 
@@ -176,6 +242,8 @@ func _ready() -> void:
 	attack_collision.set_deferred("disabled", true)
 
 	animated_sprite.animation_finished.connect(_on_animation_finished)
+	animated_sprite.frame_changed.connect(_on_player_visual_changed)
+	animated_sprite.animation_changed.connect(_on_player_visual_changed)
 	health_changed.emit(current_health, max_health)
 	energy_changed.emit(current_energy, max_energy)
 
@@ -198,6 +266,17 @@ func _physics_process(delta: float) -> void:
 			velocity += get_gravity() * delta
 		move_and_slide()
 		update_animation(0.0)
+		return
+
+	if Input.is_action_just_pressed("transform"):
+		try_start_protector_transform()
+
+	if is_transforming:
+		update_protector_transform(delta)
+		return
+
+	if is_protector:
+		update_protector_movement(delta)
 		return
 
 	is_wall_sliding = false
@@ -597,6 +676,18 @@ func apply_hit_damage(damage: int) -> void:
 # Animation
 
 func update_animation(direction: float) -> void:
+	if is_transforming:
+		return
+
+	if is_protector:
+		animated_sprite.position = PROTECTOR_SPRITE_POSITION
+		animated_sprite.flip_h = false
+		if is_on_floor() and direction != 0.0:
+			animated_sprite.play(&"walk")
+		else:
+			animated_sprite.play(&"idle")
+		return
+
 	set_wall_slide_visual(is_wall_sliding and not is_attacking and not is_rolling)
 
 	if is_attacking or is_rolling:
@@ -618,6 +709,11 @@ func update_animation(direction: float) -> void:
 
 
 func set_wall_slide_visual(enabled: bool) -> void:
+	if is_protector:
+		animated_sprite.flip_h = false
+		animated_sprite.position = PROTECTOR_SPRITE_POSITION
+		return
+
 	animated_sprite.flip_h = enabled
 	animated_sprite.position = sprite_base_position
 
@@ -632,7 +728,11 @@ func _on_animation_finished() -> void:
 			death_animation_finished = true
 		return
 
-	if hurt_control_timer > 0.0:
+	if is_reverting and animated_sprite.animation == &"transform":
+		revert_animation_finished = true
+		return
+
+	if hurt_control_timer > 0.0 or is_transforming:
 		return
 
 	if animated_sprite.animation == &"roll":
@@ -694,6 +794,10 @@ func receive_fatal_hit(
 		show()
 		visuals.show()
 		animated_sprite.play(&"death")
+	elif death_animation and is_protector:
+		# Use the Protector's final pose until its death animation is available.
+		show()
+		visuals.show()
 	else:
 		# Invalid or looping death animations fall back to instant disappearance.
 		death_dissolve_finished = true
@@ -738,7 +842,7 @@ func receive_hit(damage: int, source_position: Vector2 = Vector2.INF) -> void:
 		hurt_invulnerability_timer = hurt_invulnerability_time
 		hurt_flash_timer = 0.0
 
-		animated_sprite.play("fall")
+		animated_sprite.play(&"idle" if is_protector else &"fall")
 		update_hurt_visual()
 
 	health_changed.emit(current_health, max_health)
@@ -766,6 +870,16 @@ func update_hurt_visual() -> void:
 
 
 func reset_action_state() -> void:
+	var was_reverting := is_reverting
+	is_reverting = false
+	revert_animation_finished = false
+	is_transforming = false
+	transform_flash_timer = 0.0
+	if is_instance_valid(transform_flash):
+		transform_flash.hide()
+	# Damage may interrupt the return, but must not leave Evil active at zero.
+	if was_reverting:
+		finish_evil_mode(true)
 	finish_attack()
 	finish_roll()
 	is_gliding = false
@@ -796,6 +910,10 @@ func die() -> void:
 		and not animated_sprite.sprite_frames.get_animation_loop(&"death")
 	):
 		animated_sprite.play(&"death")
+	elif is_protector:
+		# Until a Protector death animation is imported, hold its final pose.
+		animated_sprite.pause()
+		death_animation_finished = true
 	else:
 		# Keep respawning functional if the animation has not been configured.
 		animated_sprite.stop()
@@ -887,7 +1005,7 @@ func set_respawn_position(new_position: Vector2) -> void:
 func respawn() -> void:
 	# Keep the Evil death animation, but always respawn in Good form.
 	if is_evil:
-		finish_evil_mode()
+		finish_evil_mode(true)
 	reset_death_dissolve()
 	var restore_camera := is_environmental_death
 	is_environmental_death = false
@@ -952,7 +1070,7 @@ func start_evil_mode() -> void:
 
 
 func update_evil_mode(delta: float) -> void:
-	if not is_evil:
+	if not is_evil or is_reverting:
 		return
 
 	evil_timer = maxf(evil_timer - delta, 0.0)
@@ -960,10 +1078,21 @@ func update_evil_mode(delta: float) -> void:
 		finish_evil_mode()
 
 
-func finish_evil_mode() -> void:
+func finish_evil_mode(force_immediate: bool = false) -> void:
 	if not is_evil:
 		return
 
+	if not force_immediate and not is_dead:
+		if is_reverting:
+			return
+		if is_protector:
+			start_protector_return()
+			return
+
+	is_reverting = false
+	revert_animation_finished = false
+	if is_protector or is_transforming:
+		restore_small_form()
 	is_evil = false
 	evil_timer = 0.0
 	current_energy = 0
@@ -994,3 +1123,193 @@ func set_player_sprite_frames(frames: SpriteFrames) -> void:
 
 	if not was_playing:
 		animated_sprite.pause()
+
+
+# Protector transformation
+
+func can_fit_protector() -> bool:
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = protector_shape
+	query.transform = global_transform * Transform2D(0.0, PROTECTOR_BODY_POSITION)
+	query.collision_mask = collision_mask
+	query.exclude = [get_rid()]
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	return get_world_2d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+func try_start_protector_transform() -> void:
+	if (
+		is_dead or not is_evil or is_protector or is_transforming
+		or is_attacking or is_rolling or hurt_control_timer > 0.0
+		or not is_on_floor() or velocity.y < 0.0
+	):
+		return
+
+	if (
+		not EVIL_SPRITE_FRAMES.has_animation(&"transform")
+		or EVIL_SPRITE_FRAMES.get_frame_count(&"transform") <= TRANSFORM_FLASH_FRAME
+		or EVIL_SPRITE_FRAMES.get_animation_loop(&"transform")
+	):
+		push_warning("Player: configure three non-looping transform frames in Evil.")
+		return
+
+	if not can_fit_protector():
+		return
+
+	reset_action_state()
+	is_transforming = true
+	velocity = Vector2.ZERO
+	animated_sprite.play(&"transform")
+
+
+func update_protector_transform(delta: float) -> void:
+	velocity.x = 0.0
+	velocity += get_gravity() * delta
+	move_and_slide()
+
+	if is_reverting:
+		update_transform_flash(delta)
+		if revert_animation_finished and transform_flash_timer <= 0.0:
+			finish_evil_mode(true)
+		return
+
+	if is_protector:
+		update_transform_flash(delta)
+		if transform_flash_timer <= 0.0:
+			is_transforming = false
+		return
+
+	# Recheck clearance at the actual switch, in case the scenery moved.
+	if not is_on_floor():
+		cancel_protector_transform()
+		return
+
+	if animated_sprite.animation == &"transform" and animated_sprite.frame >= TRANSFORM_FLASH_FRAME:
+		if can_fit_protector():
+			enter_protector_form()
+		else:
+			cancel_protector_transform()
+
+
+func enter_protector_form() -> void:
+	is_protector = true
+	body_collision.shape = protector_shape
+	body_collision.position = PROTECTOR_BODY_POSITION
+	hurtbox_collision.set_deferred("shape", protector_shape)
+	hurtbox_collision.set_deferred("position", PROTECTOR_BODY_POSITION)
+	update_player_ui_position()
+
+	start_transform_flash()
+
+	animated_sprite.sprite_frames = PROTECTOR_SPRITE_FRAMES
+	animated_sprite.position = PROTECTOR_SPRITE_POSITION
+	animated_sprite.flip_h = false
+	animated_sprite.play(&"idle")
+
+
+func cancel_protector_transform() -> void:
+	is_transforming = false
+	transform_flash.hide()
+	update_animation(0.0)
+
+
+func update_protector_movement(delta: float) -> void:
+	# Protector can walk and fall, but has no jump, glide, roll or attacks yet.
+	velocity += get_gravity() * delta
+
+	var direction := Input.get_axis("move_left", "move_right")
+	velocity.x = direction * protector_move_speed
+
+	if direction != 0.0:
+		visuals.scale.x = signf(direction)
+
+	update_player_ui_position()
+	move_and_slide()
+	update_animation(direction)
+
+
+func restore_small_form() -> void:
+	is_protector = false
+	reset_action_state()
+	body_collision.shape = small_body_shape
+	body_collision.position = small_body_position
+	hurtbox_collision.set_deferred("shape", small_hurtbox_shape)
+	hurtbox_collision.set_deferred("position", small_hurtbox_position)
+	player_ui.position = small_ui_position
+	animated_sprite.position = sprite_base_position
+	animated_sprite.flip_h = false
+
+func update_player_ui_position() -> void:
+	var ui_offset := Vector2.ZERO
+	var frame_offsets: Array[float] = []
+
+	if is_protector:
+		ui_offset = Vector2(
+			PROTECTOR_UI_OFFSET.x * signf(visuals.scale.x),
+			PROTECTOR_UI_OFFSET.y
+		)
+
+		if animated_sprite.sprite_frames == PROTECTOR_SPRITE_FRAMES:
+			match animated_sprite.animation:
+				&"idle":
+					frame_offsets = PROTECTOR_IDLE_UI_OFFSETS
+				&"walk":
+					frame_offsets = PROTECTOR_WALK_UI_OFFSETS
+	elif (
+		animated_sprite.sprite_frames == GOOD_SPRITE_FRAMES
+		or animated_sprite.sprite_frames == EVIL_SPRITE_FRAMES
+	):
+		match animated_sprite.animation:
+			&"idle":
+				frame_offsets = SMALL_IDLE_UI_OFFSETS
+
+	if animated_sprite.frame < frame_offsets.size():
+		ui_offset.y += frame_offsets[animated_sprite.frame]
+
+	player_ui.position = small_ui_position + ui_offset
+
+
+func _on_player_visual_changed() -> void:
+	# Follow the displayed frame, independently of the animation speed.
+	update_player_ui_position()
+
+
+# Shared flash and reverse transition
+
+func start_transform_flash() -> void:
+	transform_flash.texture = EVIL_SPRITE_FRAMES.get_frame_texture(
+		&"transform", TRANSFORM_FLASH_FRAME
+	)
+	# Scale around the player's feet, preserving whole source pixels.
+	var flash_scale := float(transform_flash_scale)
+	transform_flash.scale = Vector2.ONE * flash_scale
+	transform_flash.position = sprite_base_position * flash_scale
+	transform_flash.modulate = Color.WHITE
+	transform_flash_timer = transform_flash_hold + transform_flash_fade
+	transform_flash.show()
+
+
+func update_transform_flash(delta: float) -> void:
+	transform_flash_timer = maxf(transform_flash_timer - delta, 0.0)
+	transform_flash.modulate.a = clampf(
+		transform_flash_timer / maxf(transform_flash_fade, 0.001), 0.0, 1.0
+	)
+	if transform_flash_timer <= 0.0:
+		transform_flash.hide()
+
+
+func start_protector_return() -> void:
+	# Reverse the three transition frames beneath the enlarged flash.
+	restore_small_form()
+	is_transforming = true
+	is_reverting = true
+	revert_animation_finished = false
+	velocity.x = 0.0
+	evil_timer = 0.0
+	current_energy = 0
+	energy_changed.emit(current_energy, max_energy)
+
+	animated_sprite.sprite_frames = EVIL_SPRITE_FRAMES
+	animated_sprite.play_backwards(&"transform")
+	start_transform_flash()

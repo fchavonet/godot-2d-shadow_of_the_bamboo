@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://b04auh3dba2o7" path="res://assets/player/evil/roll.png" id="8_2lj2v"]
 [ext_resource type="Texture2D" uid="uid://dx5x0eqqjvy52" path="res://assets/player/evil/run.png" id="9_n3abp"]
 [ext_resource type="Texture2D" uid="uid://fxhthibc4mr7" path="res://assets/player/evil/wall_slide.png" id="10_2lj2v"]
+[ext_resource type="Texture2D" uid="uid://0r3hykt3ms8s" path="res://assets/player/evil/heli_slam.png" id="10_n3abp"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hqrbs"]
 atlas = ExtResource("1_2lj2v")
@@ -250,6 +251,18 @@ region = Rect2(618, 0, 103, 33)
 [sub_resource type="AtlasTexture" id="AtlasTexture_rsght"]
 atlas = ExtResource("9_n3abp")
 region = Rect2(721, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4q7yq"]
+atlas = ExtResource("10_n3abp")
+region = Rect2(0, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_elwc8"]
+atlas = ExtResource("10_n3abp")
+region = Rect2(103, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w7y35"]
+atlas = ExtResource("10_n3abp")
+region = Rect2(206, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3cjwg"]
 atlas = ExtResource("10_2lj2v")
@@ -498,6 +511,20 @@ animations = [{
 "loop": 1,
 "name": &"run",
 "speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4q7yq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_elwc8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w7y35")
+}],
+"loop": 0,
+"name": &"transform",
+"speed": 8.0
 }, {
 "frames": [{
 "duration": 1.0,

@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://p8b5xeed1xn2"]
 
 [ext_resource type="PackedScene" uid="uid://86asllqoeya" path="res://scenes/death_zone.tscn" id="1_2ue4q"]
-[ext_resource type="Script" uid="uid://ycfbvr0lcesa" path="res://scripts/player_test.gd" id="1_4fwf8"]
 [ext_resource type="PackedScene" uid="uid://bl7p85b67cbqt" path="res://scenes/player.tscn" id="1_a8v3n"]
 [ext_resource type="PackedScene" uid="uid://calt6wp24d5jj" path="res://scenes/platform.tscn" id="2_2ue4q"]
 [ext_resource type="PackedScene" uid="uid://xtadlvlm5yem" path="res://scenes/damage_zone.tscn" id="2_6p80c"]
@@ -14,7 +13,6 @@ size = Vector2(320, 20)
 size = Vector2(16, 100)
 
 [node name="PlayerTest" type="Node2D" unique_id=128439845]
-script = ExtResource("1_4fwf8")
 
 [node name="DeathZone" parent="." unique_id=615691188 instance=ExtResource("1_2ue4q")]
 position = Vector2(160, 212)
@@ -84,6 +82,8 @@ position = Vector2(138, 136)
 
 [node name="TrainingDummy" parent="." unique_id=675501490 instance=ExtResource("2_fdpfy")]
 position = Vector2(226, 160)
+gem_drop_min = 20
+gem_drop_max = 20
 damage_number_offset = Vector2(0, -22)
 
 [node name="DamageZone" parent="." unique_id=998854952 instance=ExtResource("2_6p80c")]
@@ -94,3 +94,5 @@ damage = 2
 
 [node name="Player" parent="." unique_id=1105530384 instance=ExtResource("1_a8v3n")]
 position = Vector2(33, 132)
+transform_flash_hold = 0.12
+transform_flash_fade = 0.15000000000000002

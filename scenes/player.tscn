@@ -56,8 +56,7 @@ drag_right_margin = 0.1
 material = SubResource("ShaderMaterial_2ue4q")
 position = Vector2(8.5, -12.5)
 sprite_frames = ExtResource("3_qlg0r")
-animation = &"idle"
-autoplay = "idle"
+animation = &"death"
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=1347239026]
 collision_layer = 0

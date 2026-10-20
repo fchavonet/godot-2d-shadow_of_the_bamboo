@@ -27,6 +27,7 @@ func _ready() -> void:
 	player.connect("energy_collected", show_temporarily)
 	player.connect("died", _on_died)
 	player.connect("respawned", _on_respawned)
+	player.connect("evil_mode_changed", _on_evil_mode_changed)
 
 	# Initialize without depending on the player's ready signal order.
 	_on_health_changed(int(player.get("current_health")), int(player.get("max_health")))
@@ -51,7 +52,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func show_temporarily() -> void:
-	if bool(player.get("is_dead")):
+	if bool(player.get("is_dead")) or bool(player.get("is_transforming")):
 		return
 
 	display_timer = display_time
@@ -59,10 +60,21 @@ func show_temporarily() -> void:
 
 
 func update_visibility() -> void:
+	# Hide the UI during transformation animations.
+	if bool(player.get("is_transforming")):
+		display_timer = 0.0
+		hide()
+		return
+
+	# Keep the UI visible during Evil mode or at critical health.
 	var keep_visible := (
 		not bool(player.get("is_dead"))
-		and (bool(health_bar.get("is_critical")) or bool(player.get("is_evil")))
+		and (
+			bool(player.get("is_evil"))
+			or bool(health_bar.get("is_critical"))
+		)
 	)
+
 	visible = display_timer > 0.0 or keep_visible
 
 
@@ -98,3 +110,10 @@ func update_evil_gauge() -> void:
 	var remaining := float(player.get("evil_timer"))
 	var ratio := clampf(remaining / duration, 0.0, 1.0)
 	energy_bar.value = ratio * energy_bar.max_value
+
+
+func _on_evil_mode_changed(active: bool) -> void:
+	# Returning to Good must not reuse a timer from the previous form.
+	if not active:
+		display_timer = 0.0
+	update_visibility()
