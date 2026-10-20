@@ -7,24 +7,45 @@ const DAMAGE_NUMBER_SCENE: PackedScene = preload(
 	"res://scenes/damage_number.tscn"
 )
 
+
 @export_group("Health")
 @export_range(1, 1000, 1) var max_health: int = 10
+
+@export_group("Contact Damage")
+@export_range(1, 100, 1) var contact_damage: int = 1
 
 @export_group("Feedback")
 @export_range(0.01, 0.5, 0.01) var hit_flash_duration: float = 0.1
 @export var damage_number_offset: Vector2 = Vector2(0.0, -28.0)
 
+
 var health: int = 0
 var hit_flash_timer: float = 0.0
 var is_dead: bool = false
 
+
 @onready var visual: ColorRect = $Visual
 @onready var base_color: Color = visual.color
+@onready var hurtbox: Area2D = $Hurtbox
 
 
 func _ready() -> void:
 	health = max_health
 	health_changed.emit(health, max_health)
+
+
+func _physics_process(_delta: float) -> void:
+	if is_dead:
+		return
+
+	for area in hurtbox.get_overlapping_areas():
+		var target := area.get_parent()
+
+		if target == null or target == self:
+			continue
+
+		if target.has_method("receive_hit"):
+			target.call("receive_hit", contact_damage, global_position)
 
 
 func _process(delta: float) -> void:
@@ -37,6 +58,8 @@ func _process(delta: float) -> void:
 		if hit_flash_timer == 0.0:
 			visual.color = base_color
 
+
+# Health and damage
 
 func receive_hit(damage: int) -> void:
 	if is_dead or damage <= 0:
@@ -55,6 +78,17 @@ func receive_hit(damage: int) -> void:
 	visual.color = Color.WHITE
 
 
+func die() -> void:
+	if is_dead:
+		return
+
+	is_dead = true
+	died.emit()
+	queue_free()
+
+
+# Damage feedback
+
 func show_damage_number(amount: int) -> void:
 	var damage_number := DAMAGE_NUMBER_SCENE.instantiate() as Node2D
 
@@ -63,12 +97,3 @@ func show_damage_number(amount: int) -> void:
 
 	damage_number.global_position = global_position + damage_number_offset
 	damage_number.display(amount)
-
-
-func die() -> void:
-	if is_dead:
-		return
-
-	is_dead = true
-	died.emit()
-	queue_free()

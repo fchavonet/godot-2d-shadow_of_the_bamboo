@@ -1,5 +1,10 @@
 extends CharacterBody2D
 
+signal health_changed(current: int, maximum: int)
+signal damaged(amount: int)
+signal died
+signal respawned
+
 const ATTACK_ANIMATIONS: Array[StringName] = [
 	&"attack_1",
 	&"attack_2",
@@ -31,9 +36,25 @@ const WALL_SLIDE_VISUAL_OFFSET := Vector2(-1.0, 0.0)
 const ROLL_HITBOX_POSITION := Vector2(0.0, -8.0)
 const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 
-const HURTBOX_COLLISION_MASK: int = 2
+const HURTBOX_COLLISION_MASK: int = 4
 const MAX_HIT_QUERY_RESULTS: int = 32
 
+
+@export_group("Health")
+@export_range(1, 100, 1) var max_health: int = 5
+@export_range(0.0, 3.0, 0.05) var hurt_invulnerability_time: float = 0.8
+
+@export_range(0.01, 0.5, 0.01) var hurt_flash_interval: float = 0.08
+
+@export_group("Knockback")
+@export_range(0.0, 300.0, 1.0) var hurt_knockback_speed: float = 100.0
+@export_range(0.0, 300.0, 1.0) var hurt_knockback_jump_speed: float = 100.0
+@export_range(0.0, 1.0, 0.01) var hurt_control_lock_time: float = 0.2
+
+@export_group("Respawn")
+@export var auto_respawn: bool = true
+@export_range(0.0, 5.0, 0.05) var respawn_delay: float = 0.8
+@export_range(0.0, 5.0, 0.05) var respawn_invulnerability_time: float = 1.0
 
 @export_group("Movement")
 @export var move_speed: float = 90.0
@@ -50,7 +71,7 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 
 @export_group("Wall Movement")
 @export_range(1.0, 300.0, 1.0) var wall_slide_speed: float = 40.0
-@export var wall_jump_speed: float = 150.0
+@export var wall_jump_speed: float = 100.0
 @export_range(0.01, 0.5, 0.01) var wall_jump_control_delay: float = 0.12
 
 @export_group("Roll")
@@ -60,6 +81,17 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_group("Combat")
 @export_range(1, 100, 1) var attack_damage: int = 1
 
+
+var current_health: int = 0
+var hurt_invulnerability_timer: float = 0.0
+
+var hurt_control_timer: float = 0.0
+var hurt_flash_timer: float = 0.0
+var is_dead: bool = false
+var death_animation_finished: bool = false
+var respawn_timer: float = 0.0
+var respawn_position: Vector2
+var respawn_facing: float = 1.0
 
 var jump_coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
@@ -87,6 +119,7 @@ var attack_hit_targets: Array[int] = []
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
+@onready var sprite_base_modulate: Color = animated_sprite.modulate
 @onready var sprite_base_position: Vector2 = animated_sprite.position
 @onready var attack_collision: CollisionShape2D = (
 	$Visuals/AttackHitbox/CollisionShape2D
@@ -94,14 +127,39 @@ var attack_hit_targets: Array[int] = []
 
 
 func _ready() -> void:
+	current_health = max_health
+	respawn_position = global_position
+	respawn_facing = signf(visuals.scale.x)
+
 	# Each player instance owns its collision shape.
 	attack_collision.shape = attack_collision.shape.duplicate()
 	attack_collision.set_deferred("disabled", true)
 
 	animated_sprite.animation_finished.connect(_on_animation_finished)
+	health_changed.emit(current_health, max_health)
 
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		if auto_respawn and death_animation_finished:
+			respawn_timer = maxf(respawn_timer - delta, 0.0)
+			if respawn_timer <= 0.0:
+				respawn()
+		return
+
+	hurt_invulnerability_timer = maxf(hurt_invulnerability_timer - delta, 0.0)
+	hurt_flash_timer += delta
+	update_hurt_visual()
+
+	# Damage recovery takes priority over attacks, rolling and movement.
+	if hurt_control_timer > 0.0:
+		hurt_control_timer = maxf(hurt_control_timer - delta, 0.0)
+		if not is_on_floor() or velocity.y < 0.0:
+			velocity += get_gravity() * delta
+		move_and_slide()
+		update_animation(0.0)
+		return
+
 	is_wall_sliding = false
 	wall_jump_timer = maxf(wall_jump_timer - delta, 0.0)
 
@@ -483,7 +541,7 @@ func apply_hit_damage(damage: int) -> void:
 
 		var target := hurtbox.get_parent()
 
-		if target == null or not target.has_method("receive_hit"):
+		if target == null or target == self or not target.has_method("receive_hit"):
 			continue
 
 		var target_id := target.get_instance_id()
@@ -529,6 +587,15 @@ func set_wall_slide_visual(enabled: bool) -> void:
 
 
 func _on_animation_finished() -> void:
+	if is_dead:
+		if animated_sprite.animation == &"death":
+			death_animation_finished = true
+			respawn_timer = respawn_delay
+		return
+
+	if hurt_control_timer > 0.0:
+		return
+
 	if animated_sprite.animation == &"roll":
 		finish_roll()
 		return
@@ -550,3 +617,121 @@ func _on_animation_finished() -> void:
 		animated_sprite.play(ATTACK_ANIMATIONS[attack_combo_index])
 	else:
 		finish_attack()
+
+# Health and damage
+
+func receive_hit(damage: int, source_position: Vector2 = Vector2.INF) -> void:
+	if damage <= 0 or is_dead or is_rolling or hurt_invulnerability_timer > 0.0:
+		return
+
+	var applied_damage := mini(damage, current_health)
+	current_health -= applied_damage
+	reset_action_state()
+
+	if current_health <= 0:
+		die()
+	else:
+		hurt_control_timer = hurt_control_lock_time
+		hurt_invulnerability_timer = hurt_invulnerability_time
+		hurt_flash_timer = 0.0
+
+		# Without a source position, recoil opposite to the facing direction.
+		var knockback_direction := -signf(visuals.scale.x)
+		if source_position != Vector2.INF:
+			var separation := global_position.x - source_position.x
+			if not is_zero_approx(separation):
+				knockback_direction = signf(separation)
+
+		velocity = Vector2(
+			knockback_direction * hurt_knockback_speed,
+			- hurt_knockback_jump_speed
+		)
+		animated_sprite.play("fall")
+		update_hurt_visual()
+
+	health_changed.emit(current_health, max_health)
+	damaged.emit(applied_damage)
+	if is_dead:
+		died.emit()
+
+
+func heal(amount: int) -> void:
+	if amount <= 0 or is_dead or current_health >= max_health:
+		return
+
+	current_health = mini(current_health + amount, max_health)
+	health_changed.emit(current_health, max_health)
+
+
+func update_hurt_visual() -> void:
+	animated_sprite.modulate = sprite_base_modulate
+	if hurt_invulnerability_timer <= 0.0:
+		return
+
+	var flash_index := int(hurt_flash_timer / hurt_flash_interval)
+	if flash_index % 2 == 0:
+		animated_sprite.modulate.a = sprite_base_modulate.a * 0.3
+
+
+func reset_action_state() -> void:
+	finish_attack()
+	finish_roll()
+	is_gliding = false
+	is_wall_sliding = false
+	glide_hold_timer = 0.0
+	jump_buffer_timer = 0.0
+	jump_coyote_timer = 0.0
+	wall_jump_timer = 0.0
+	wall_jump_direction = 0.0
+	has_wall_jump_momentum = false
+	set_wall_slide_visual(false)
+
+
+func die() -> void:
+	is_dead = true
+	velocity = Vector2.ZERO
+	hurt_control_timer = 0.0
+	hurt_invulnerability_timer = 0.0
+	death_animation_finished = false
+	respawn_timer = respawn_delay
+	animated_sprite.modulate = sprite_base_modulate
+	visuals.show()
+
+	if (
+		animated_sprite.sprite_frames.has_animation(&"death")
+		and animated_sprite.sprite_frames.get_frame_count(&"death") > 0
+		and not animated_sprite.sprite_frames.get_animation_loop(&"death")
+	):
+		animated_sprite.play(&"death")
+	else:
+		# Keep respawning functional if the animation has not been configured.
+		animated_sprite.stop()
+		visuals.hide()
+		death_animation_finished = true
+		push_warning("Player: configure a non-looping death animation.")
+
+
+func set_respawn_position(new_position: Vector2) -> void:
+	# A level or checkpoint can update the spawn without changing this script.
+	respawn_position = new_position
+
+
+func respawn() -> void:
+	reset_action_state()
+	global_position = respawn_position
+	reset_physics_interpolation()
+	velocity = Vector2.ZERO
+	current_health = max_health
+	is_dead = false
+	death_animation_finished = false
+	has_air_rolled = false
+	hurt_control_timer = 0.0
+	respawn_timer = 0.0
+	hurt_invulnerability_timer = respawn_invulnerability_time
+	hurt_flash_timer = 0.0
+	visuals.scale.x = respawn_facing
+	visuals.show()
+	animated_sprite.play("idle")
+	update_hurt_visual()
+	health_changed.emit(current_health, max_health)
+	respawned.emit()
