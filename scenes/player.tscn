@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://df5qbduloyjxg" path="res://assets/player/good/roll.png" id="8_ur7pv"]
 [ext_resource type="Texture2D" uid="uid://dfndvu26kpba0" path="res://assets/player/good/wall_slide.png" id="10_y4r1p"]
 [ext_resource type="Script" uid="uid://dpt524x4nyqoi" path="res://scripts/player_health_bar.gd" id="12_3v2ag"]
+[ext_resource type="Script" uid="uid://f5blafni052g" path="res://scripts/player_ui.gd" id="13_f1ej7"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2ue4q"]
 shader = ExtResource("2_jej6c")
@@ -528,6 +529,20 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
 size = Vector2(26, 16)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jieny"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.2509804, 0.2509804, 0.2509804, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nfwyi"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 1, 1, 1)
+
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_jieny"]
 radius = 5.0
 height = 16.0
@@ -570,9 +585,24 @@ position = Vector2(18, -8)
 shape = SubResource("RectangleShape2D_jieny")
 disabled = true
 
-[node name="HealthBar" type="Node2D" parent="." unique_id=950798627]
-position = Vector2(0, -20)
+[node name="UI" type="Node2D" parent="." unique_id=1499583043]
+script = ExtResource("13_f1ej7")
+
+[node name="HealthBar" type="Node2D" parent="UI" unique_id=950798627]
+position = Vector2(0, -21)
 script = ExtResource("12_3v2ag")
+
+[node name="EnergyBar" type="ProgressBar" parent="UI" unique_id=1077908357]
+offset_left = -7.0
+offset_top = -20.0
+offset_right = 7.0
+offset_bottom = -19.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_jieny")
+theme_override_styles/fill = SubResource("StyleBoxFlat_nfwyi")
+max_value = 20.0
+value = 10.0
+show_percentage = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=382385470]
 position = Vector2(0, -8)

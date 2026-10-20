@@ -4,6 +4,8 @@ signal health_changed(current: int, maximum: int)
 signal damaged(amount: int)
 signal died
 signal respawned
+signal energy_changed(current: int, maximum: int)
+signal energy_collected
 
 const ATTACK_ANIMATIONS: Array[StringName] = [
 	&"attack_1",
@@ -64,6 +66,9 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(0.0, 3.0, 0.1) var death_dissolve_delay: float = 1.0
 @export_range(0.0, 2.0, 0.05) var death_dissolve_duration: float = 0.5
 
+@export_group("Transformation Energy")
+@export_range(1, 1000, 1) var max_energy: int = 20
+
 @export_group("Movement")
 @export var move_speed: float = 90.0
 
@@ -90,6 +95,7 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(1, 100, 1) var attack_damage: int = 1
 
 
+var current_energy: int = 0
 var current_health: int = 0
 var hurt_invulnerability_timer: float = 0.0
 
@@ -159,6 +165,7 @@ func _ready() -> void:
 
 	animated_sprite.animation_finished.connect(_on_animation_finished)
 	health_changed.emit(current_health, max_health)
+	energy_changed.emit(current_energy, max_energy)
 
 
 func _physics_process(delta: float) -> void:
@@ -890,3 +897,19 @@ func respawn() -> void:
 
 	if restore_camera and player_camera != null:
 		player_camera.process_mode = saved_camera_process_mode
+
+
+# Transformation energy
+
+func collect_energy(amount: int) -> void:
+	if is_dead or amount <= 0:
+		return
+
+	var previous_energy := current_energy
+	current_energy = mini(current_energy + amount, max_energy)
+
+	if current_energy != previous_energy:
+		energy_changed.emit(current_energy, max_energy)
+
+	# Collection feedback also works when energy is already full.
+	energy_collected.emit()

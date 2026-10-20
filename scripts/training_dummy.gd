@@ -8,6 +8,16 @@ const DAMAGE_NUMBER_SCENE: PackedScene = preload(
 )
 
 
+const GEM_SCENE: PackedScene = preload("res://scenes/gem.tscn")
+
+
+@export_group("Gem Drops")
+@export_range(0, 100, 1) var gem_drop_min: int = 2
+@export_range(0, 100, 1) var gem_drop_max: int = 5
+@export var gem_drop_offset: Vector2 = Vector2(0.0, -8.0)
+@export_range(0.0, 300.0, 1.0) var gem_spread_speed: float = 60.0
+@export_range(0.0, 300.0, 1.0) var gem_launch_speed: float = 100.0
+
 @export_group("Health")
 @export_range(1, 1000, 1) var max_health: int = 10
 
@@ -70,6 +80,7 @@ func die() -> void:
 	# Stop contact damage immediately, before deferred removal.
 	hurtbox.set("enabled", false)
 
+	drop_gems()
 	died.emit()
 	queue_free()
 
@@ -84,3 +95,22 @@ func show_damage_number(amount: int) -> void:
 
 	damage_number.global_position = global_position + damage_number_offset
 	damage_number.display(amount)
+
+
+# Gem drops
+
+func drop_gems() -> void:
+	var minimum := mini(gem_drop_min, gem_drop_max)
+	var maximum := maxi(gem_drop_min, gem_drop_max)
+	var count := randi_range(minimum, maximum)
+	var level := get_tree().current_scene
+
+	for index in count:
+		var gem := GEM_SCENE.instantiate() as CharacterBody2D
+		# Gems belong to the level and survive the enemy's removal.
+		level.add_child(gem)
+		gem.global_position = global_position + gem_drop_offset
+		gem.launch(Vector2(
+			randf_range(-gem_spread_speed, gem_spread_speed),
+			-randf_range(gem_launch_speed * 0.7, gem_launch_speed)
+		))

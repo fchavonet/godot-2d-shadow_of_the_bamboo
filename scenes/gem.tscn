@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://8tao8jm6dxfw"]
+
+[ext_resource type="Script" uid="uid://b0bhpamopp1ig" path="res://scripts/gem.gd" id="1_5cxma"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
+size = Vector2(2, 2)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_nfwyi"]
+radius = 24.0
+
+[node name="Gem" type="CharacterBody2D" unique_id=1566188728]
+collision_layer = 0
+safe_margin = 0.01
+script = ExtResource("1_5cxma")
+
+[node name="Visual" type="ColorRect" parent="." unique_id=1148402132]
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=512402702]
+shape = SubResource("RectangleShape2D_jieny")
+
+[node name="MagnetArea" type="Area2D" parent="." unique_id=1654092253]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MagnetArea" unique_id=1392742093]
+shape = SubResource("CircleShape2D_nfwyi")

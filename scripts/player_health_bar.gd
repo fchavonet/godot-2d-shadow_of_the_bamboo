@@ -6,11 +6,6 @@ extends Node2D
 @export_range(1, 20, 1) var points_per_row: int = 5
 @export_range(0, 8, 1) var row_spacing: int = 1
 
-@export_group("Visibility")
-@export_range(0.1, 10.0, 0.1) var damage_display_time: float = 2.0
-@export_range(0.0, 2.0, 0.05) var death_display_time: float = 0.4
-@export var toggle_action: StringName = &"toggle_health_bar"
-
 @export_group("Colors")
 @export var full_color: Color = Color.WHITE
 @export var empty_color: Color = Color(0.25, 0.25, 0.25, 1.0)
@@ -23,40 +18,17 @@ extends Node2D
 
 var current_health: int = 0
 var maximum_health: int = 0
-var display_timer: float = 0.0
 var blink_timer: float = 0.0
 var is_critical: bool = false
 
 
-func _ready() -> void:
-	var player := get_parent()
-	player.connect("health_changed", _on_health_changed)
-	player.connect("damaged", _on_damaged)
-	player.connect("respawned", _on_respawned)
-
-	# Also support adding the display after the player has initialized.
-	_on_health_changed(int(player.get("current_health")), int(player.get("max_health")))
-
-
 func _process(delta: float) -> void:
-	display_timer = maxf(display_timer - delta, 0.0)
 	if is_critical and critical_blink:
 		blink_timer = fmod(blink_timer + delta, blink_interval * 2.0)
 		queue_redraw()
-	update_visibility()
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if current_health <= 0:
-		return
-
-	if event.is_action_pressed(toggle_action) and not event.is_echo():
-		display_timer = damage_display_time
-		update_visibility()
-		get_viewport().set_input_as_handled()
-
-
-func _on_health_changed(current: int, maximum: int) -> void:
+func set_health(current: int, maximum: int) -> void:
 	maximum_health = maxi(maximum, 0)
 	current_health = clampi(current, 0, maximum_health)
 	var was_critical := is_critical
@@ -66,27 +38,7 @@ func _on_health_changed(current: int, maximum: int) -> void:
 	)
 	if is_critical != was_critical:
 		blink_timer = 0.0
-	update_visibility()
 	queue_redraw()
-
-
-func _on_damaged(_amount: int) -> void:
-	display_timer = death_display_time if current_health == 0 else damage_display_time
-	update_visibility()
-
-
-func _on_respawned() -> void:
-	display_timer = 0.0
-	blink_timer = 0.0
-	update_visibility()
-	queue_redraw()
-
-
-func update_visibility() -> void:
-	visible = maximum_health > 0 and (
-		display_timer > 0.0
-		or is_critical
-	)
 
 
 func _draw() -> void:
