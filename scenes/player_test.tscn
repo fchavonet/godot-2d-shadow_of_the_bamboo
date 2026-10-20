@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://p8b5xeed1xn2"]
 
 [ext_resource type="PackedScene" uid="uid://86asllqoeya" path="res://scenes/death_zone.tscn" id="1_2ue4q"]
-[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/damage_zone.gd" id="1_6p80c"]
 [ext_resource type="PackedScene" uid="uid://bl7p85b67cbqt" path="res://scenes/player.tscn" id="1_a8v3n"]
 [ext_resource type="PackedScene" uid="uid://xtadlvlm5yem" path="res://scenes/damage_zone.tscn" id="2_6p80c"]
 [ext_resource type="PackedScene" uid="uid://bbi8v2nv45h75" path="res://scenes/training_dummy.tscn" id="2_fdpfy"]
@@ -76,8 +75,7 @@ damage_number_offset = Vector2(0, -22)
 
 [node name="DamageZone" parent="." unique_id=998854952 instance=ExtResource("2_6p80c")]
 position = Vector2(268, 158)
-script = ExtResource("1_6p80c")
-damage = 2
+priority = 2
 
 [node name="Player" parent="." unique_id=1105530384 instance=ExtResource("1_a8v3n")]
 position = Vector2(33, 132)

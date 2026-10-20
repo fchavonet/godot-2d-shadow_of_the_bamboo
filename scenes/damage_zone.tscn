@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://xtadlvlm5yem"]
 
+[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/damage_zone.gd" id="1_ppofr"]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
 size = Vector2(32, 4)
 
@@ -7,6 +9,7 @@ size = Vector2(32, 4)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
+script = ExtResource("1_ppofr")
 
 [node name="Visual" type="ColorRect" parent="." unique_id=1292670908]
 offset_left = -16.0

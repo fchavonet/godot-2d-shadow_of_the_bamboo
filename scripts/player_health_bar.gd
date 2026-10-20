@@ -8,6 +8,7 @@ extends Node2D
 
 @export_group("Visibility")
 @export_range(0.1, 10.0, 0.1) var damage_display_time: float = 2.0
+@export_range(0.0, 2.0, 0.05) var death_display_time: float = 0.4
 @export var toggle_action: StringName = &"toggle_health_bar"
 
 @export_group("Colors")
@@ -70,7 +71,7 @@ func _on_health_changed(current: int, maximum: int) -> void:
 
 
 func _on_damaged(_amount: int) -> void:
-	display_timer = damage_display_time
+	display_timer = death_display_time if current_health == 0 else damage_display_time
 	update_visibility()
 
 
@@ -83,8 +84,7 @@ func _on_respawned() -> void:
 
 func update_visibility() -> void:
 	visible = maximum_health > 0 and (
-		current_health == 0
-		or display_timer > 0.0
+		display_timer > 0.0
 		or is_critical
 	)
 
