@@ -6,6 +6,10 @@ signal died
 signal respawned
 signal energy_changed(current: int, maximum: int)
 signal energy_collected
+signal evil_mode_changed(active: bool)
+
+const GOOD_SPRITE_FRAMES: SpriteFrames = preload("res://assets/player/good/good_frames.tres")
+const EVIL_SPRITE_FRAMES: SpriteFrames = preload("res://assets/player/evil/evil_frames.tres")
 
 const ATTACK_ANIMATIONS: Array[StringName] = [
 	&"attack_1",
@@ -69,6 +73,9 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_group("Transformation Energy")
 @export_range(1, 1000, 1) var max_energy: int = 20
 
+@export_group("Evil Mode")
+@export_range(0.1, 120.0, 0.1) var evil_duration: float = 10.0
+
 @export_group("Movement")
 @export var move_speed: float = 90.0
 
@@ -95,6 +102,8 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(1, 100, 1) var attack_damage: int = 1
 
 
+var is_evil: bool = false
+var evil_timer: float = 0.0
 var current_energy: int = 0
 var current_health: int = 0
 var hurt_invulnerability_timer: float = 0.0
@@ -149,6 +158,9 @@ var attack_hit_targets: Array[int] = []
 
 
 func _ready() -> void:
+	animated_sprite.sprite_frames = GOOD_SPRITE_FRAMES
+	animated_sprite.play(&"idle")
+
 	# Keep shader parameters independent for each player instance.
 	death_dissolve_material = ShaderMaterial.new()
 	death_dissolve_material.shader = DEATH_DISSOLVE_SHADER
@@ -172,6 +184,8 @@ func _physics_process(delta: float) -> void:
 	if is_dead:
 		update_death_movement(delta)
 		return
+
+	update_evil_mode(delta)
 
 	hurt_invulnerability_timer = maxf(hurt_invulnerability_timer - delta, 0.0)
 	hurt_flash_timer += delta
@@ -871,6 +885,9 @@ func set_respawn_position(new_position: Vector2) -> void:
 
 
 func respawn() -> void:
+	# Keep the Evil death animation, but always respawn in Good form.
+	if is_evil:
+		finish_evil_mode()
 	reset_death_dissolve()
 	var restore_camera := is_environmental_death
 	is_environmental_death = false
@@ -905,11 +922,75 @@ func collect_energy(amount: int) -> void:
 	if is_dead or amount <= 0:
 		return
 
+	# Gems remain collectible, but cannot extend an active transformation.
+	if is_evil:
+		energy_collected.emit()
+		return
+
 	var previous_energy := current_energy
 	current_energy = mini(current_energy + amount, max_energy)
 
 	if current_energy != previous_energy:
 		energy_changed.emit(current_energy, max_energy)
 
-	# Collection feedback also works when energy is already full.
+	if current_energy >= max_energy:
+		start_evil_mode()
+
 	energy_collected.emit()
+
+
+# Evil transformation
+
+func start_evil_mode() -> void:
+	if is_dead or is_evil or current_energy < max_energy:
+		return
+
+	is_evil = true
+	evil_timer = evil_duration
+	set_player_sprite_frames(EVIL_SPRITE_FRAMES)
+	evil_mode_changed.emit(true)
+
+
+func update_evil_mode(delta: float) -> void:
+	if not is_evil:
+		return
+
+	evil_timer = maxf(evil_timer - delta, 0.0)
+	if evil_timer <= 0.0:
+		finish_evil_mode()
+
+
+func finish_evil_mode() -> void:
+	if not is_evil:
+		return
+
+	is_evil = false
+	evil_timer = 0.0
+	current_energy = 0
+	set_player_sprite_frames(GOOD_SPRITE_FRAMES)
+	energy_changed.emit(current_energy, max_energy)
+	evil_mode_changed.emit(false)
+
+
+func set_player_sprite_frames(frames: SpriteFrames) -> void:
+	# Preserve the current action and frame so an attack is not restarted.
+	var animation_name := animated_sprite.animation
+	var frame_index := animated_sprite.frame
+	var frame_progress := animated_sprite.frame_progress
+	var was_playing := animated_sprite.is_playing()
+
+	animated_sprite.sprite_frames = frames
+
+	if not frames.has_animation(animation_name):
+		animation_name = &"idle"
+		frame_index = 0
+		frame_progress = 0.0
+
+	animated_sprite.play(animation_name)
+	var last_frame := maxi(frames.get_frame_count(animation_name) - 1, 0)
+	animated_sprite.set_frame_and_progress(
+		clampi(frame_index, 0, last_frame), frame_progress
+	)
+
+	if not was_playing:
+		animated_sprite.pause()

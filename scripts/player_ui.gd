@@ -18,7 +18,7 @@ func _ready() -> void:
 	energy_bar.show()
 	energy_bar.show_percentage = false
 	energy_bar.min_value = 0.0
-	energy_bar.step = 1.0
+	energy_bar.step = 0.0
 	energy_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	player.connect("health_changed", _on_health_changed)
@@ -35,6 +35,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if bool(player.get("is_evil")):
+		update_evil_gauge()
 	display_timer = maxf(display_timer - delta, 0.0)
 	update_visibility()
 
@@ -59,7 +61,7 @@ func show_temporarily() -> void:
 func update_visibility() -> void:
 	var keep_visible := (
 		not bool(player.get("is_dead"))
-		and bool(health_bar.get("is_critical"))
+		and (bool(health_bar.get("is_critical")) or bool(player.get("is_evil")))
 	)
 	visible = display_timer > 0.0 or keep_visible
 
@@ -88,3 +90,11 @@ func _on_died() -> void:
 func _on_respawned() -> void:
 	display_timer = 0.0
 	update_visibility()
+
+
+func update_evil_gauge() -> void:
+	# During Evil mode, show remaining time instead of stored energy.
+	var duration := maxf(float(player.get("evil_duration")), 0.001)
+	var remaining := float(player.get("evil_timer"))
+	var ratio := clampf(remaining / duration, 0.0, 1.0)
+	energy_bar.value = ratio * energy_bar.max_value
