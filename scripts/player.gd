@@ -53,6 +53,7 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 
 @export_group("Respawn")
 @export var auto_respawn: bool = true
+@export_range(1.0, 15.0, 0.5) var death_fall_timeout: float = 5.0
 @export_range(0.0, 5.0, 0.05) var respawn_delay: float = 0.8
 @export_range(0.0, 5.0, 0.05) var respawn_invulnerability_time: float = 1.0
 
@@ -89,6 +90,7 @@ var hurt_control_timer: float = 0.0
 var hurt_flash_timer: float = 0.0
 var is_dead: bool = false
 var death_animation_finished: bool = false
+var death_fall_timer: float = 0.0
 var respawn_timer: float = 0.0
 var respawn_position: Vector2
 var respawn_facing: float = 1.0
@@ -141,10 +143,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
-		if auto_respawn and death_animation_finished:
-			respawn_timer = maxf(respawn_timer - delta, 0.0)
-			if respawn_timer <= 0.0:
-				respawn()
+		update_death_movement(delta)
 		return
 
 	hurt_invulnerability_timer = maxf(hurt_invulnerability_timer - delta, 0.0)
@@ -590,7 +589,6 @@ func _on_animation_finished() -> void:
 	if is_dead:
 		if animated_sprite.animation == &"death":
 			death_animation_finished = true
-			respawn_timer = respawn_delay
 		return
 
 	if hurt_control_timer > 0.0:
@@ -628,6 +626,18 @@ func receive_hit(damage: int, source_position: Vector2 = Vector2.INF) -> void:
 	current_health -= applied_damage
 	reset_action_state()
 
+	# Without a source position, recoil opposite to the facing direction.
+	var knockback_direction := -signf(visuals.scale.x)
+	if source_position != Vector2.INF:
+		var separation := global_position.x - source_position.x
+		if not is_zero_approx(separation):
+			knockback_direction = signf(separation)
+
+	velocity = Vector2(
+		knockback_direction * hurt_knockback_speed,
+		- hurt_knockback_jump_speed
+	)
+
 	if current_health <= 0:
 		die()
 	else:
@@ -635,17 +645,6 @@ func receive_hit(damage: int, source_position: Vector2 = Vector2.INF) -> void:
 		hurt_invulnerability_timer = hurt_invulnerability_time
 		hurt_flash_timer = 0.0
 
-		# Without a source position, recoil opposite to the facing direction.
-		var knockback_direction := -signf(visuals.scale.x)
-		if source_position != Vector2.INF:
-			var separation := global_position.x - source_position.x
-			if not is_zero_approx(separation):
-				knockback_direction = signf(separation)
-
-		velocity = Vector2(
-			knockback_direction * hurt_knockback_speed,
-			- hurt_knockback_jump_speed
-		)
 		animated_sprite.play("fall")
 		update_hurt_visual()
 
@@ -689,7 +688,7 @@ func reset_action_state() -> void:
 
 func die() -> void:
 	is_dead = true
-	velocity = Vector2.ZERO
+	death_fall_timer = 0.0
 	hurt_control_timer = 0.0
 	hurt_invulnerability_timer = 0.0
 	death_animation_finished = false
@@ -711,6 +710,35 @@ func die() -> void:
 		push_warning("Player: configure a non-looping death animation.")
 
 
+func update_death_movement(delta: float) -> void:
+	# Keep physical collisions and gravity active while controls are blocked.
+	if is_on_floor() and velocity.y >= 0.0:
+		velocity.x = 0.0
+	velocity += get_gravity() * delta
+	move_and_slide()
+
+	if is_on_floor():
+		velocity.x = 0.0
+		death_fall_timer = 0.0
+	else:
+		death_fall_timer += delta
+		# Require a continuous pause on the ground before respawning.
+		respawn_timer = respawn_delay
+
+	if not auto_respawn:
+		return
+
+	# Recover from bottomless pits even without a floor or completed animation.
+	if death_fall_timer >= death_fall_timeout:
+		respawn()
+		return
+
+	if is_on_floor() and death_animation_finished:
+		respawn_timer = maxf(respawn_timer - delta, 0.0)
+		if respawn_timer <= 0.0:
+			respawn()
+
+
 func set_respawn_position(new_position: Vector2) -> void:
 	# A level or checkpoint can update the spawn without changing this script.
 	respawn_position = new_position
@@ -723,6 +751,7 @@ func respawn() -> void:
 	velocity = Vector2.ZERO
 	current_health = max_health
 	is_dead = false
+	death_fall_timer = 0.0
 	death_animation_finished = false
 	has_air_rolled = false
 	hurt_control_timer = 0.0
