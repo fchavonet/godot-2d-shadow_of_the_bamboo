@@ -522,23 +522,33 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
 size = Vector2(26, 16)
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_nfwyi"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_jieny"]
 radius = 5.0
 height = 16.0
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_jieny"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_nfwyi"]
 radius = 5.0
 height = 16.0
 
 [node name="Player" type="CharacterBody2D" unique_id=1105530384]
 script = ExtResource("1_qhqgy")
 
+[node name="Camera2D" type="Camera2D" parent="." unique_id=410877848]
+position = Vector2(0, -8)
+process_callback = 0
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+drag_horizontal_enabled = true
+drag_vertical_enabled = true
+drag_left_margin = 0.1
+drag_right_margin = 0.1
+
 [node name="Visuals" type="Node2D" parent="." unique_id=1896689742]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals" unique_id=730011078]
 position = Vector2(8.5, -12.5)
 sprite_frames = SubResource("SpriteFrames_nfwyi")
-animation = &"death"
+animation = &"idle"
 autoplay = "idle"
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=1347239026]
@@ -555,6 +565,10 @@ disabled = true
 position = Vector2(0, -20)
 script = ExtResource("12_3v2ag")
 
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=382385470]
+position = Vector2(0, -8)
+shape = SubResource("CapsuleShape2D_jieny")
+
 [node name="Hurtbox" type="Area2D" parent="." unique_id=1019010706]
 collision_layer = 2
 collision_mask = 0
@@ -563,7 +577,3 @@ monitoring = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=1018743805]
 position = Vector2(0, -8)
 shape = SubResource("CapsuleShape2D_nfwyi")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=382385470]
-position = Vector2(0, -8)
-shape = SubResource("CapsuleShape2D_jieny")

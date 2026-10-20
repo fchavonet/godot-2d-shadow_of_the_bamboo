@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/damage_zone.gd" id="1_ppofr"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
-size = Vector2(32, 4)
+size = Vector2(32, 2)
 
 [node name="DamageZone" type="Area2D" unique_id=998854952]
 collision_layer = 0
@@ -13,9 +13,9 @@ script = ExtResource("1_ppofr")
 
 [node name="Visual" type="ColorRect" parent="." unique_id=1292670908]
 offset_left = -16.0
-offset_top = -2.0
+offset_top = -1.0
 offset_right = 16.0
-offset_bottom = 2.0
+offset_bottom = 1.0
 mouse_filter = 2
 color = Color(1, 0, 0, 1)
 

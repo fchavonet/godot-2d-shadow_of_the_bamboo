@@ -84,7 +84,7 @@ position = Vector2(226, 160)
 damage_number_offset = Vector2(0, -22)
 
 [node name="DamageZone" parent="." unique_id=998854952 instance=ExtResource("2_6p80c")]
-position = Vector2(268, 158)
+position = Vector2(268, 160)
 priority = 2
 damage = 2
 
