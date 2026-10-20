@@ -618,6 +618,17 @@ func _on_animation_finished() -> void:
 
 # Health and damage
 
+func receive_fatal_hit(source_position: Vector2 = Vector2.INF) -> void:
+	if is_dead or current_health <= 0:
+		return
+
+	# Environmental death bypasses roll and damage invulnerability.
+	reset_action_state()
+	hurt_invulnerability_timer = 0.0
+
+	receive_hit(current_health, source_position)
+
+
 func receive_hit(damage: int, source_position: Vector2 = Vector2.INF) -> void:
 	if damage <= 0 or is_dead or is_rolling or hurt_invulnerability_timer > 0.0:
 		return

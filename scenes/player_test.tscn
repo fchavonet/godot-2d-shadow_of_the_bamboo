@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://p8b5xeed1xn2"]
 
+[ext_resource type="PackedScene" uid="uid://86asllqoeya" path="res://scenes/death_zone.tscn" id="1_2ue4q"]
+[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/damage_zone.gd" id="1_6p80c"]
 [ext_resource type="PackedScene" uid="uid://bl7p85b67cbqt" path="res://scenes/player.tscn" id="1_a8v3n"]
+[ext_resource type="PackedScene" uid="uid://xtadlvlm5yem" path="res://scenes/damage_zone.tscn" id="2_6p80c"]
 [ext_resource type="PackedScene" uid="uid://bbi8v2nv45h75" path="res://scenes/training_dummy.tscn" id="2_fdpfy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
@@ -10,6 +13,9 @@ size = Vector2(320, 20)
 size = Vector2(16, 100)
 
 [node name="PlayerTest" type="Node2D" unique_id=128439845]
+
+[node name="DeathZone" parent="." unique_id=615691188 instance=ExtResource("1_2ue4q")]
+position = Vector2(160, 212)
 
 [node name="Ground" type="StaticBody2D" parent="." unique_id=1002572673]
 position = Vector2(160, 170)
@@ -65,8 +71,13 @@ color = Color(0.043137256, 0.043137256, 0.043137256, 1)
 shape = SubResource("RectangleShape2D_nfwyi")
 
 [node name="TrainingDummy" parent="." unique_id=675501490 instance=ExtResource("2_fdpfy")]
-position = Vector2(230, 160)
+position = Vector2(226, 160)
 damage_number_offset = Vector2(0, -22)
+
+[node name="DamageZone" parent="." unique_id=998854952 instance=ExtResource("2_6p80c")]
+position = Vector2(268, 158)
+script = ExtResource("1_6p80c")
+damage = 2
 
 [node name="Player" parent="." unique_id=1105530384 instance=ExtResource("1_a8v3n")]
 position = Vector2(33, 132)

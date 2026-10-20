@@ -82,8 +82,10 @@ func _on_respawned() -> void:
 
 
 func update_visibility() -> void:
-	visible = current_health > 0 and (
-		display_timer > 0.0 or is_critical
+	visible = maximum_health > 0 and (
+		current_health == 0
+		or display_timer > 0.0
+		or is_critical
 	)
 
 

@@ -11,9 +11,6 @@ const DAMAGE_NUMBER_SCENE: PackedScene = preload(
 @export_group("Health")
 @export_range(1, 1000, 1) var max_health: int = 10
 
-@export_group("Contact Damage")
-@export_range(1, 100, 1) var contact_damage: int = 1
-
 @export_group("Feedback")
 @export_range(0.01, 0.5, 0.01) var hit_flash_duration: float = 0.1
 @export var damage_number_offset: Vector2 = Vector2(0.0, -28.0)
@@ -32,20 +29,6 @@ var is_dead: bool = false
 func _ready() -> void:
 	health = max_health
 	health_changed.emit(health, max_health)
-
-
-func _physics_process(_delta: float) -> void:
-	if is_dead:
-		return
-
-	for area in hurtbox.get_overlapping_areas():
-		var target := area.get_parent()
-
-		if target == null or target == self:
-			continue
-
-		if target.has_method("receive_hit"):
-			target.call("receive_hit", contact_damage, global_position)
 
 
 func _process(delta: float) -> void:
@@ -83,6 +66,10 @@ func die() -> void:
 		return
 
 	is_dead = true
+
+	# Stop contact damage immediately, before deferred removal.
+	hurtbox.set("enabled", false)
+
 	died.emit()
 	queue_free()
 
