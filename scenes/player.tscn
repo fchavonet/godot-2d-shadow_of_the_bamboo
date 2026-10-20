@@ -538,6 +538,7 @@ height = 16.0
 
 [node name="Player" type="CharacterBody2D" unique_id=1105530384]
 position = Vector2(2, 2)
+safe_margin = 0.001
 script = ExtResource("1_qhqgy")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=410877848]
