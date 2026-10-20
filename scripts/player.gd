@@ -31,6 +31,8 @@ const ATTACK_SIZES: Array[Vector2] = [
 	Vector2(40.5, 16.0),
 ]
 
+const DEATH_DISSOLVE_SHADER: Shader = preload("res://shaders/player_death_dissolve.gdshader")
+
 const WALL_SLIDE_VISUAL_OFFSET := Vector2(-1.0, 0.0)
 
 const ROLL_HITBOX_POSITION := Vector2(0.0, -8.0)
@@ -57,6 +59,10 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(1.0, 15.0, 0.5) var death_fall_timeout: float = 5.0
 @export_range(0.0, 5.0, 0.05) var respawn_delay: float = 0.8
 @export_range(0.0, 5.0, 0.05) var respawn_invulnerability_time: float = 1.0
+
+@export_group("Death Effect")
+@export_range(0.0, 3.0, 0.1) var death_dissolve_delay: float = 1.0
+@export_range(0.0, 2.0, 0.05) var death_dissolve_duration: float = 0.5
 
 @export_group("Movement")
 @export var move_speed: float = 90.0
@@ -92,6 +98,10 @@ var hurt_flash_timer: float = 0.0
 var is_dead: bool = false
 var is_environmental_death: bool = false
 var saved_camera_process_mode: ProcessMode = Node.PROCESS_MODE_INHERIT
+var death_dissolve_material: ShaderMaterial
+var death_dissolve_delay_timer: float = 0.0
+var death_dissolve_elapsed: float = 0.0
+var death_dissolve_finished: bool = false
 var death_animation_finished: bool = false
 var death_fall_timer: float = 0.0
 var respawn_timer: float = 0.0
@@ -133,6 +143,12 @@ var attack_hit_targets: Array[int] = []
 
 
 func _ready() -> void:
+	# Keep shader parameters independent for each player instance.
+	death_dissolve_material = ShaderMaterial.new()
+	death_dissolve_material.shader = DEATH_DISSOLVE_SHADER
+	animated_sprite.material = death_dissolve_material
+	reset_death_dissolve()
+
 	current_health = max_health
 	respawn_position = global_position
 	respawn_facing = signf(visuals.scale.x)
@@ -593,8 +609,6 @@ func _on_animation_finished() -> void:
 	if is_dead:
 		if animated_sprite.animation == &"death":
 			death_animation_finished = true
-			if is_environmental_death:
-				hide()
 		return
 
 	if hurt_control_timer > 0.0:
@@ -634,6 +648,7 @@ func receive_fatal_hit(
 	# A death zone also takes over a body falling after a combat death.
 	var was_dead := is_dead
 	var applied_damage := current_health
+	reset_death_dissolve()
 	is_dead = true
 	is_environmental_death = true
 	current_health = 0
@@ -660,6 +675,7 @@ func receive_fatal_hit(
 		animated_sprite.play(&"death")
 	else:
 		# Invalid or looping death animations fall back to instant disappearance.
+		death_dissolve_finished = true
 		hide()
 
 	# Freeze camera updates without disabling the active camera.
@@ -743,6 +759,7 @@ func reset_action_state() -> void:
 
 
 func die() -> void:
+	reset_death_dissolve()
 	is_dead = true
 	death_fall_timer = 0.0
 	hurt_control_timer = 0.0
@@ -763,13 +780,16 @@ func die() -> void:
 		animated_sprite.stop()
 		visuals.hide()
 		death_animation_finished = true
+		death_dissolve_finished = true
 		push_warning("Player: configure a non-looping death animation.")
 
 
 func update_death_movement(delta: float) -> void:
 	if is_environmental_death:
-		# Stay in place until the animation ends, then start the respawn delay.
+		# Stay in place through the animation and dissolution.
 		if not death_animation_finished:
+			return
+		if not update_death_dissolve(delta):
 			return
 		hide()
 		if auto_respawn:
@@ -778,7 +798,7 @@ func update_death_movement(delta: float) -> void:
 				respawn()
 		return
 
-	# Keep physical collisions and gravity active while controls are blocked.
+	# Normal combat deaths keep gravity and recoil until landing.
 	if is_on_floor() and velocity.y >= 0.0:
 		velocity.x = 0.0
 	velocity += get_gravity() * delta
@@ -789,21 +809,53 @@ func update_death_movement(delta: float) -> void:
 		death_fall_timer = 0.0
 	else:
 		death_fall_timer += delta
-		# Require a continuous pause on the ground before respawning.
 		respawn_timer = respawn_delay
 
-	if not auto_respawn:
-		return
-
-	# Recover from bottomless pits even without a floor or completed animation.
-	if death_fall_timer >= death_fall_timeout:
+	# Retain the recovery safeguard for bottomless falls.
+	if auto_respawn and death_fall_timer >= death_fall_timeout:
 		respawn()
 		return
 
 	if is_on_floor() and death_animation_finished:
-		respawn_timer = maxf(respawn_timer - delta, 0.0)
-		if respawn_timer <= 0.0:
-			respawn()
+		if not update_death_dissolve(delta):
+			return
+		if auto_respawn:
+			respawn_timer = maxf(respawn_timer - delta, 0.0)
+			if respawn_timer <= 0.0:
+				respawn()
+
+
+# Death dissolution
+
+func reset_death_dissolve() -> void:
+	death_dissolve_delay_timer = death_dissolve_delay
+	death_dissolve_elapsed = 0.0
+	death_dissolve_finished = false
+	death_dissolve_material.set_shader_parameter("dissolve_amount", 0.0)
+	death_dissolve_material.set_shader_parameter("noise_seed", randf_range(0.0, 1000.0))
+
+
+func update_death_dissolve(delta: float) -> bool:
+	if death_dissolve_finished:
+		return true
+
+	# Hold the final death frame before dissolving.
+	if death_dissolve_delay_timer > 0.0:
+		death_dissolve_delay_timer = maxf(death_dissolve_delay_timer - delta, 0.0)
+		return false
+
+	death_dissolve_elapsed += delta
+	var progress := 1.0
+	if death_dissolve_duration > 0.0:
+		progress = clampf(death_dissolve_elapsed / death_dissolve_duration, 0.0, 1.0)
+	death_dissolve_material.set_shader_parameter("dissolve_amount", progress)
+
+	if progress >= 1.0:
+		death_dissolve_finished = true
+		visuals.hide()
+
+	# Start the respawn countdown on the next physics tick.
+	return false
 
 
 func set_respawn_position(new_position: Vector2) -> void:
@@ -812,6 +864,7 @@ func set_respawn_position(new_position: Vector2) -> void:
 
 
 func respawn() -> void:
+	reset_death_dissolve()
 	var restore_camera := is_environmental_death
 	is_environmental_death = false
 	reset_action_state()
@@ -837,7 +890,3 @@ func respawn() -> void:
 
 	if restore_camera and player_camera != null:
 		player_camera.process_mode = saved_camera_process_mode
-		# Recenter immediately instead of scrolling back from the death zone.
-		player_camera.align()
-		player_camera.reset_smoothing()
-		player_camera.force_update_scroll()
