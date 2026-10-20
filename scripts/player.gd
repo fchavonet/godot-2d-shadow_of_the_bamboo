@@ -26,6 +26,8 @@ const ATTACK_SIZES: Array[Vector2] = [
 	Vector2(40.5, 16.0),
 ]
 
+const WALL_SLIDE_VISUAL_OFFSET := Vector2(-1.0, 0.0)
+
 const ROLL_HITBOX_POSITION := Vector2(0.0, -8.0)
 const ROLL_HITBOX_SIZE := Vector2(16.0, 16.0)
 
@@ -46,6 +48,11 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(0.0, 1.0, 0.01) var glide_hold_time: float = 0.2
 @export_range(1.0, 300.0, 1.0) var glide_fall_speed: float = 60.0
 
+@export_group("Wall Movement")
+@export_range(1.0, 300.0, 1.0) var wall_slide_speed: float = 40.0
+@export var wall_jump_speed: float = 150.0
+@export_range(0.01, 0.5, 0.01) var wall_jump_control_delay: float = 0.12
+
 @export_group("Roll")
 @export var roll_speed: float = 180.0
 @export_range(1, 100, 1) var roll_damage: int = 1
@@ -59,6 +66,11 @@ var jump_buffer_timer: float = 0.0
 
 var glide_hold_timer: float = 0.0
 var is_gliding: bool = false
+
+var is_wall_sliding: bool = false
+var wall_jump_timer: float = 0.0
+var wall_jump_direction: float = 0.0
+var has_wall_jump_momentum: bool = false
 
 var is_rolling: bool = false
 var roll_direction: float = 1.0
@@ -75,6 +87,7 @@ var attack_hit_targets: Array[int] = []
 
 @onready var visuals: Node2D = $Visuals
 @onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
+@onready var sprite_base_position: Vector2 = animated_sprite.position
 @onready var attack_collision: CollisionShape2D = (
 	$Visuals/AttackHitbox/CollisionShape2D
 )
@@ -89,11 +102,17 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	is_wall_sliding = false
+	wall_jump_timer = maxf(wall_jump_timer - delta, 0.0)
+
 	var grounded := is_on_floor() and velocity.y >= 0.0
 
 	if grounded:
 		jump_coyote_timer = jump_coyote_time
 		has_air_rolled = false
+		wall_jump_timer = 0.0
+		wall_jump_direction = 0.0
+		has_wall_jump_momentum = false
 	else:
 		jump_coyote_timer = maxf(jump_coyote_timer - delta, 0.0)
 		velocity += get_gravity() * delta
@@ -117,15 +136,20 @@ func _physics_process(delta: float) -> void:
 
 	var direction := Input.get_axis("move_left", "move_right")
 	update_horizontal_movement(direction, grounded)
+	update_wall_slide(direction, grounded)
 
 	move_and_slide()
+
+	# Clear wall slide when landing or leaving the wall.
+	if is_on_floor() or not is_on_wall():
+		is_wall_sliding = false
 
 	update_animation(direction)
 	update_attack_hitbox()
 	check_attack_hits()
 
 
-# Jump and glide
+# Jump
 
 func update_jump(delta: float, grounded: bool) -> bool:
 	jump_buffer_timer = maxf(jump_buffer_timer - delta, 0.0)
@@ -136,14 +160,36 @@ func update_jump(delta: float, grounded: bool) -> bool:
 		jump_buffer_timer = jump_buffer_time
 
 	var wants_to_jump := jump_pressed or jump_buffer_timer > 0.0
-	var can_jump := grounded or jump_coyote_timer > 0.0
+	var can_ground_jump := grounded or jump_coyote_timer > 0.0
+	var can_wall_jump := (
+		not grounded
+		and is_on_wall()
+		and wall_jump_timer <= 0.0
+	)
+
 	var jumped_this_frame := false
 
-	if wants_to_jump and can_jump and not is_attacking:
-		velocity.y = - jump_speed
+	if wants_to_jump and not is_attacking:
+		if can_wall_jump:
+			wall_jump_direction = signf(get_wall_normal().x)
+			wall_jump_timer = wall_jump_control_delay
+			has_wall_jump_momentum = true
+
+			velocity.x = wall_jump_direction * wall_jump_speed
+			velocity.y = - jump_speed
+			visuals.scale.x = wall_jump_direction
+
+			jumped_this_frame = true
+		elif can_ground_jump:
+			velocity.y = - jump_speed
+			jumped_this_frame = true
+
+	if jumped_this_frame:
 		jump_coyote_timer = 0.0
 		jump_buffer_timer = 0.0
-		jumped_this_frame = true
+		glide_hold_timer = 0.0
+		is_gliding = false
+		is_wall_sliding = false
 
 		# A buffered tap still produces a short jump.
 		if not Input.is_action_pressed("jump"):
@@ -158,6 +204,8 @@ func update_jump(delta: float, grounded: bool) -> bool:
 
 	return jumped_this_frame
 
+
+# Glide
 
 func update_glide(delta: float, grounded: bool) -> void:
 	is_gliding = false
@@ -182,20 +230,74 @@ func update_glide(delta: float, grounded: bool) -> void:
 		velocity.y = minf(velocity.y, glide_fall_speed)
 
 
+# Horizontal movement and wall slide
+
 func update_horizontal_movement(direction: float, grounded: bool) -> void:
 	if is_attacking:
 		jump_buffer_timer = 0.0
-
 		if grounded:
 			velocity.x = 0.0
-
-		# Air attacks preserve horizontal momentum.
 		return
+
+	# Gliding restores horizontal control after a wall jump.
+	if is_gliding:
+		wall_jump_timer = 0.0
+		wall_jump_direction = 0.0
+		has_wall_jump_momentum = false
+
+	# Preserve the initial push away from the wall.
+	if wall_jump_timer > 0.0:
+		velocity.x = wall_jump_direction * wall_jump_speed
+		return
+
+	# A direction held toward the previous wall must not cancel the rebound.
+	var holding_previous_direction := (
+		not grounded
+		and wall_jump_direction != 0.0
+		and direction * wall_jump_direction < 0.0
+	)
+
+	if holding_previous_direction:
+		velocity.x = wall_jump_direction * wall_jump_speed
+		visuals.scale.x = wall_jump_direction
+		return
+
+	wall_jump_direction = 0.0
+
+	# Releasing input preserves momentum; steering again restores control.
+	if has_wall_jump_momentum and not grounded:
+		if direction == 0.0:
+			return
+		has_wall_jump_momentum = false
 
 	velocity.x = direction * move_speed
 
 	if direction != 0.0:
 		visuals.scale.x = signf(direction)
+
+
+func update_wall_slide(direction: float, grounded: bool) -> void:
+	if grounded or is_attacking or is_rolling:
+		return
+
+	if wall_jump_timer > 0.0:
+		return
+
+	if not is_on_wall() or velocity.y <= 0.0:
+		return
+
+	var wall_normal := get_wall_normal()
+	var pushing_into_wall := direction * wall_normal.x < 0.0
+
+	if not pushing_into_wall:
+		return
+
+	is_wall_sliding = true
+	is_gliding = false
+	glide_hold_timer = 0.0
+	has_wall_jump_momentum = false
+
+	velocity.y = minf(velocity.y, wall_slide_speed)
 
 
 # Roll
@@ -214,13 +316,19 @@ func update_roll_input(grounded: bool) -> void:
 
 
 func start_roll(air_roll: bool) -> void:
+	set_wall_slide_visual(false)
 	is_rolling = true
 	roll_direction = signf(visuals.scale.x)
+
+	wall_jump_timer = 0.0
+	wall_jump_direction = 0.0
+	has_wall_jump_momentum = false
 
 	if air_roll:
 		has_air_rolled = true
 
 	is_gliding = false
+	is_wall_sliding = false
 	glide_hold_timer = 0.0
 	jump_buffer_timer = 0.0
 	jump_coyote_timer = 0.0
@@ -236,6 +344,7 @@ func update_roll() -> void:
 	jump_buffer_timer = 0.0
 	glide_hold_timer = 0.0
 	is_gliding = false
+	is_wall_sliding = false
 
 	velocity.x = roll_direction * roll_speed
 
@@ -274,12 +383,14 @@ func update_attack_input(grounded: bool) -> void:
 
 
 func start_attack(air_attack: bool) -> void:
+	set_wall_slide_visual(false)
 	is_attacking = true
 	is_air_attack = air_attack
 	attack_combo_index = 0
 	attack_queued = false
 
 	is_gliding = false
+	is_wall_sliding = false
 	glide_hold_timer = 0.0
 	jump_buffer_timer = 0.0
 	jump_coyote_timer = 0.0
@@ -388,11 +499,15 @@ func apply_hit_damage(damage: int) -> void:
 # Animation
 
 func update_animation(direction: float) -> void:
+	set_wall_slide_visual(is_wall_sliding and not is_attacking and not is_rolling)
+
 	if is_attacking or is_rolling:
 		return
 
 	if not is_on_floor():
-		if is_gliding:
+		if is_wall_sliding:
+			animated_sprite.play("wall_slide")
+		elif is_gliding:
 			animated_sprite.play("glide")
 		elif velocity.y < 0.0:
 			animated_sprite.play("jump")
@@ -402,6 +517,15 @@ func update_animation(direction: float) -> void:
 		animated_sprite.play("run")
 	else:
 		animated_sprite.play("idle")
+
+
+func set_wall_slide_visual(enabled: bool) -> void:
+	animated_sprite.flip_h = enabled
+	animated_sprite.position = sprite_base_position
+
+	if enabled:
+		animated_sprite.position.x = - sprite_base_position.x
+		animated_sprite.position += WALL_SLIDE_VISUAL_OFFSET
 
 
 func _on_animation_finished() -> void:
