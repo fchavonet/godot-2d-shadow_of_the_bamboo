@@ -66,11 +66,11 @@ func update_visibility() -> void:
 		hide()
 		return
 
-	# Keep the UI visible during Evil mode or at critical health.
+	# Keep the UI visible in Protector form or at critical health.
 	var keep_visible := (
 		not bool(player.get("is_dead"))
 		and (
-			bool(player.get("is_evil"))
+			bool(player.get("is_protector"))
 			or bool(health_bar.get("is_critical"))
 		)
 	)
