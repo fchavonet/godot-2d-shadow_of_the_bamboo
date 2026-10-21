@@ -1,0 +1,141 @@
+[gd_scene format=3 uid="uid://3dnreevxia2i"]
+
+[ext_resource type="Texture2D" uid="uid://0qyovlyxfcih" path="res://assets/player/protector/blast.png" id="1_ft34h"]
+[ext_resource type="Script" uid="uid://dyfb4rwmje1r" path="res://scripts/protector_shot.gd" id="1_j54rp"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j54rp"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(0, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_so4ry"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(140, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o88we"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(280, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cdeke"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(420, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_c20gq"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(560, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_07sff"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(700, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_besrq"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(840, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mqcoh"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(980, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mcwln"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(1120, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vmife"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(1260, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g0urh"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(1400, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2mb38"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(1540, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mee7i"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(1680, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tvmlb"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(1820, 0, 140, 30)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pr65c"]
+atlas = ExtResource("1_ft34h")
+region = Rect2(1960, 0, 140, 30)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jieny"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j54rp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_so4ry")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o88we")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cdeke")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_c20gq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_07sff")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_besrq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mqcoh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mcwln")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vmife")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g0urh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2mb38")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mee7i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tvmlb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pr65c")
+}],
+"loop": 0,
+"name": &"blast",
+"speed": 12.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
+size = Vector2(132, 20)
+
+[node name="ProtectorShot" type="Node2D" unique_id=1799265251]
+script = ExtResource("1_j54rp")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=57380850]
+sprite_frames = SubResource("SpriteFrames_jieny")
+animation = &"blast"
+autoplay = "blast"
+frame = 6
+centered = false
+offset = Vector2(0, -15)
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=1881072934]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=1449249632]
+position = Vector2(66, 0)
+shape = SubResource("RectangleShape2D_jieny")
+disabled = true

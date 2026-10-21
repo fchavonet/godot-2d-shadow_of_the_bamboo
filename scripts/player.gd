@@ -34,6 +34,9 @@ const SMALL_IDLE_UI_OFFSETS: Array[float] = [
 const SMALL_RUN_UI_OFFSETS: Array[float] = [
 	2.0, 1.0, -1.0, 0.0, 2.0, 1.0, -1.0, 0.0,
 ]
+const PROTECTOR_MELEE_HIT_FRAME: int = 4
+const PROTECTOR_SHOOT_FRAME: int = 3
+const PROTECTOR_SHOT_SCENE: PackedScene = preload("res://scenes/protector_shot.tscn")
 const TRANSFORM_FLASH_FRAME: int = 2
 
 const ATTACK_ANIMATIONS: Array[StringName] = [
@@ -104,6 +107,14 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_group("Protector")
 @export_range(1.0, 300.0, 1.0) var protector_move_speed: float = 55.0
 
+@export_group("Protector Combat")
+@export_range(1, 100, 1) var protector_melee_damage: int = 3
+@export var protector_melee_hitbox_position := Vector2(40.0, -16.0)
+@export var protector_melee_hitbox_size := Vector2(56.0, 32.0)
+
+@export_group("Protector Shot")
+@export var protector_shot_offset := Vector2(30.0, -10.0)
+
 @export_group("Transformation Flash")
 @export_range(0.5, 4.0, 0.1) var transform_flash_scale: float = 1.5
 @export_range(0.0, 0.3, 0.01) var transform_flash_hold: float = 0.06
@@ -135,6 +146,7 @@ const MAX_HIT_QUERY_RESULTS: int = 32
 @export_range(1, 100, 1) var attack_damage: int = 1
 
 
+var protector_shot_spawned: bool = false
 var is_protector: bool = false
 var is_transforming: bool = false
 var is_reverting: bool = false
@@ -579,6 +591,7 @@ func start_attack(air_attack: bool) -> void:
 
 
 func finish_attack() -> void:
+	protector_shot_spawned = false
 	is_attacking = false
 	is_air_attack = false
 	attack_combo_index = 0
@@ -595,6 +608,12 @@ func finish_attack() -> void:
 func is_attack_hit_active() -> bool:
 	if not is_attacking:
 		return false
+
+	if is_protector:
+		return (
+			animated_sprite.animation == &"melee"
+			and animated_sprite.frame == PROTECTOR_MELEE_HIT_FRAME
+		)
 
 	if animated_sprite.animation != ATTACK_ANIMATIONS[attack_combo_index]:
 		return false
@@ -614,16 +633,28 @@ func is_attack_hit_active() -> bool:
 
 func update_attack_hitbox() -> void:
 	if is_attacking:
-		attack_collision.position = ATTACK_POSITIONS[attack_combo_index]
-
 		var attack_shape := attack_collision.shape as RectangleShape2D
-		attack_shape.size = ATTACK_SIZES[attack_combo_index]
+
+		if is_protector:
+			attack_collision.position = protector_melee_hitbox_position
+			attack_shape.size = Vector2(
+				maxf(protector_melee_hitbox_size.x, 1.0),
+				maxf(protector_melee_hitbox_size.y, 1.0)
+			)
+		else:
+			attack_collision.position = ATTACK_POSITIONS[attack_combo_index]
+			attack_shape.size = ATTACK_SIZES[attack_combo_index]
 
 	attack_collision.set_deferred("disabled", not is_attack_hit_active())
 
 
 func check_attack_hits() -> void:
 	if not is_attack_hit_active():
+		return
+
+	if is_protector:
+		# Keep the same target list throughout the strike, even across ticks.
+		apply_hit_damage(protector_melee_damage)
 		return
 
 	var impact_index: int = 0
@@ -682,6 +713,8 @@ func update_animation(direction: float) -> void:
 	if is_protector:
 		animated_sprite.position = PROTECTOR_SPRITE_POSITION
 		animated_sprite.flip_h = false
+		if is_attacking:
+			return
 		if is_on_floor() and direction != 0.0:
 			animated_sprite.play(&"walk")
 		else:
@@ -740,6 +773,11 @@ func _on_animation_finished() -> void:
 		return
 
 	if not is_attacking:
+		return
+
+	if is_protector:
+		if animated_sprite.animation in [&"melee", &"shoot"]:
+			finish_attack()
 		return
 
 	if animated_sprite.animation != ATTACK_ANIMATIONS[attack_combo_index]:
@@ -1218,18 +1256,99 @@ func cancel_protector_transform() -> void:
 
 
 func update_protector_movement(delta: float) -> void:
-	# Protector can walk and fall, but has no jump, glide, roll or attacks yet.
+	# Protector can walk, fall and attack on the ground.
 	velocity += get_gravity() * delta
 
 	var direction := Input.get_axis("move_left", "move_right")
-	velocity.x = direction * protector_move_speed
 
-	if direction != 0.0:
-		visuals.scale.x = signf(direction)
+	if not is_attacking:
+		if direction != 0.0:
+			visuals.scale.x = signf(direction)
+
+		if Input.is_action_just_pressed("attack"):
+			start_protector_attack()
+		elif Input.is_action_just_pressed("roll"):
+			start_protector_shoot()
+
+	# Hold position and facing through melee or shooting; gravity still applies.
+	velocity.x = 0.0 if is_attacking else direction * protector_move_speed
 
 	update_player_ui_position()
 	move_and_slide()
 	update_animation(direction)
+	update_attack_hitbox()
+	check_attack_hits()
+
+
+func start_protector_attack() -> void:
+	if (
+		not is_protector or is_dead or is_transforming or is_attacking
+		or hurt_control_timer > 0.0
+		or not is_on_floor() or velocity.y < 0.0
+	):
+		return
+
+	var frames := animated_sprite.sprite_frames
+	if (
+		not frames.has_animation(&"melee")
+		or frames.get_frame_count(&"melee") <= PROTECTOR_MELEE_HIT_FRAME
+		or frames.get_animation_loop(&"melee")
+	):
+		push_warning("Player: configure a non-looping Protector melee animation with frame 4.")
+		return
+
+	reset_action_state()
+	is_attacking = true
+	velocity.x = 0.0
+	animated_sprite.play(&"melee")
+
+
+func start_protector_shoot() -> void:
+	if (
+		not is_protector or is_dead or is_transforming or is_attacking
+		or hurt_control_timer > 0.0
+		or not is_on_floor() or velocity.y < 0.0
+	):
+		return
+
+	var frames := animated_sprite.sprite_frames
+	if (
+		not frames.has_animation(&"shoot")
+		or frames.get_frame_count(&"shoot") <= PROTECTOR_SHOOT_FRAME
+		or frames.get_animation_loop(&"shoot")
+	):
+		push_warning("Player: configure a non-looping Protector shoot animation with frame 3.")
+		return
+
+	reset_action_state()
+	is_attacking = true
+	velocity.x = 0.0
+	animated_sprite.play(&"shoot")
+
+
+func try_spawn_protector_shot() -> void:
+	if (
+		not is_protector or not is_attacking or is_dead or is_transforming
+		or protector_shot_spawned
+		or animated_sprite.animation != &"shoot"
+		or animated_sprite.frame < PROTECTOR_SHOOT_FRAME
+	):
+		return
+
+	var level := get_tree().current_scene
+	if level == null or level == self:
+		level = get_parent()
+	if level == null:
+		return
+
+	protector_shot_spawned = true
+	var shot := PROTECTOR_SHOT_SCENE.instantiate() as Node2D
+	# Capture the muzzle position and facing so the effect stays in the world.
+	var shot_transform := visuals.global_transform * Transform2D(
+		0.0, protector_shot_offset
+	)
+	level.add_child(shot)
+	shot.configure_shot(self, shot_transform)
 
 
 func restore_small_form() -> void:
@@ -1276,6 +1395,7 @@ func update_player_ui_position() -> void:
 func _on_player_visual_changed() -> void:
 	# Follow the displayed frame, independently of the animation speed.
 	update_player_ui_position()
+	try_spawn_protector_shot()
 
 
 # Shared flash and reverse transition

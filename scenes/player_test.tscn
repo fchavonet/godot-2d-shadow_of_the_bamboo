@@ -80,11 +80,16 @@ position = Vector2(110, 110)
 [node name="Platform3" parent="." unique_id=544743875 instance=ExtResource("2_2ue4q")]
 position = Vector2(138, 136)
 
-[node name="TrainingDummy" parent="." unique_id=675501490 instance=ExtResource("2_fdpfy")]
+[node name="TrainingDummy1" parent="." unique_id=675501490 instance=ExtResource("2_fdpfy")]
 position = Vector2(226, 160)
 gem_drop_min = 20
 gem_drop_max = 20
 damage_number_offset = Vector2(0, -22)
+
+[node name="TrainingDummy2" parent="." unique_id=1455445258 instance=ExtResource("2_fdpfy")]
+position = Vector2(82, 160)
+gem_drop_min = 20
+gem_drop_max = 20
 
 [node name="DamageZone" parent="." unique_id=998854952 instance=ExtResource("2_6p80c")]
 position = Vector2(268, 159)
