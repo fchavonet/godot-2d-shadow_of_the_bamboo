@@ -1040,7 +1040,7 @@ func collect_energy(amount: int) -> void:
 	if is_dead or amount <= 0:
 		return
 
-	# Gems remain collectible, but cannot extend an active transformation.
+	# Gems cannot refill a stored charge or extend Protector mode.
 	if is_evil:
 		energy_collected.emit()
 		return
@@ -1070,7 +1070,8 @@ func start_evil_mode() -> void:
 
 
 func update_evil_mode(delta: float) -> void:
-	if not is_evil or is_reverting:
+	# Keep the full charge until the player actually becomes Protector.
+	if not is_evil or not is_protector or is_reverting:
 		return
 
 	evil_timer = maxf(evil_timer - delta, 0.0)
@@ -1193,6 +1194,8 @@ func update_protector_transform(delta: float) -> void:
 
 
 func enter_protector_form() -> void:
+	# Start the full duration only after the transformation succeeds.
+	evil_timer = evil_duration
 	is_protector = true
 	body_collision.shape = protector_shape
 	body_collision.position = PROTECTOR_BODY_POSITION
