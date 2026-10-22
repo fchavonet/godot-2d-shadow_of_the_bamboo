@@ -70,7 +70,7 @@ func update_attraction(delta: float) -> void:
 	# Aim at the center of the player's hurtbox rather than their feet.
 	var target_position := target.global_position
 	var collision := target.get_node_or_null(
-		"Hurtbox/CollisionShape2D"
+		"Hurtbox/CollisionShape"
 	) as CollisionShape2D
 
 	if collision != null:

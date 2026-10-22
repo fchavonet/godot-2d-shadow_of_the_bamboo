@@ -91,6 +91,9 @@ position = Vector2(82, 160)
 gem_drop_min = 20
 gem_drop_max = 20
 
+[node name="TrainingDummy" parent="." unique_id=640323694 instance=ExtResource("2_fdpfy")]
+position = Vector2(200, 160)
+
 [node name="DamageZone" parent="." unique_id=998854952 instance=ExtResource("2_6p80c")]
 position = Vector2(268, 159)
 priority = 2

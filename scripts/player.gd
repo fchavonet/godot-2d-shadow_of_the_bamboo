@@ -76,83 +76,100 @@ const HURTBOX_COLLISION_MASK: int = 4
 const MAX_HIT_QUERY_RESULTS: int = 32
 
 
+@export_group("Good")
+@export_subgroup("Movement")
+@export var move_speed: float = 90.0
+
+@export_subgroup("Jump")
+@export var jump_speed: float = 250.0
+@export_range(0.0, 1.0) var jump_cut_multiplier: float = 0.5
+@export_range(0.0, 0.3, 0.01) var jump_coyote_time: float = 0.1
+@export_range(0.0, 0.3, 0.01) var jump_buffer_time: float = 0.1
+
+@export_subgroup("Glide")
+@export_range(0.0, 1.0, 0.01) var glide_hold_time: float = 0.2
+@export_range(1.0, 300.0, 1.0) var glide_fall_speed: float = 60.0
+
+@export_subgroup("Wall Movement")
+@export_range(1.0, 300.0, 1.0) var wall_slide_speed: float = 40.0
+@export var wall_jump_speed: float = 100.0
+@export_range(0.01, 0.5, 0.01) var wall_jump_control_delay: float = 0.12
+
+@export_subgroup("Roll")
+@export var roll_speed: float = 180.0
+@export_range(1, 100, 1) var roll_damage: int = 1
+
+@export_subgroup("Combat")
+@export_range(1, 100, 1) var attack_damage: int = 1
+
+
 @export_group("Health")
+@export_subgroup("Damage Response")
 @export_range(1, 100, 1) var max_health: int = 5
 @export_range(0.0, 3.0, 0.05) var hurt_invulnerability_time: float = 0.8
 
 @export_range(0.01, 0.5, 0.01) var hurt_flash_interval: float = 0.08
 
-@export_group("Knockback")
+@export_subgroup("Knockback")
 @export_range(0.0, 300.0, 1.0) var hurt_knockback_speed: float = 100.0
 @export_range(0.0, 300.0, 1.0) var hurt_knockback_jump_speed: float = 100.0
 @export_range(0.0, 1.0, 0.01) var hurt_control_lock_time: float = 0.2
 
-@export_group("Respawn")
+@export_subgroup("Death Effect")
+@export_range(0.0, 3.0, 0.1) var death_dissolve_delay: float = 1.0
+@export_range(0.0, 2.0, 0.05) var death_dissolve_duration: float = 0.5
+
+@export_subgroup("Respawn")
 @export var auto_respawn: bool = true
 @export_range(0.0, 2.0, 0.05) var instant_death_respawn_delay: float = 0.3
 @export_range(1.0, 15.0, 0.5) var death_fall_timeout: float = 5.0
 @export_range(0.0, 5.0, 0.05) var respawn_delay: float = 0.8
 @export_range(0.0, 5.0, 0.05) var respawn_invulnerability_time: float = 1.0
 
-@export_group("Death Effect")
-@export_range(0.0, 3.0, 0.1) var death_dissolve_delay: float = 1.0
-@export_range(0.0, 2.0, 0.05) var death_dissolve_duration: float = 0.5
 
-@export_group("Transformation Energy")
+@export_group("Energy")
+@export_subgroup("Capacity")
 @export_range(1, 1000, 1) var max_energy: int = 20
 
-@export_group("Evil Mode")
-@export_range(0.1, 120.0, 0.1) var evil_duration: float = 10.0
+@export_subgroup("Good to Evil Effect")
+@export_range(0.25, 3.0, 0.05) var evil_ready_effect_speed: float = 1.5
+
 
 @export_group("Protector")
+@export_subgroup("Duration")
+@export_range(0.1, 120.0, 0.1) var evil_duration: float = 10.0
+
+@export_subgroup("Movement")
 @export_range(1.0, 300.0, 1.0) var protector_move_speed: float = 55.0
 
-@export_group("Protector Combat")
+@export_subgroup("Transformation Effect")
+@export_range(0.5, 4.0, 0.1) var transform_flash_scale: float = 1.5
+
+@export_subgroup("Footsteps")
+@export var protector_step_frames: Array[int] = [2, 8]
+@export_range(0.0, 3.0, 0.05) var protector_step_shake_strength: float = 0.5
+@export_range(0.02, 0.3, 0.01) var protector_step_shake_duration: float = 0.1
+
+@export_subgroup("Melee")
 @export_range(1, 100, 1) var protector_melee_damage: int = 3
 @export var protector_melee_hitbox_position := Vector2(40.0, -16.0)
 @export var protector_melee_hitbox_size := Vector2(56.0, 32.0)
 
-@export_group("Protector Shot")
-@export var protector_shot_offset := Vector2(30.0, -10.0)
-
-@export_group("Transformation Flash")
-@export_range(0.5, 4.0, 0.1) var transform_flash_scale: float = 1.5
-@export_range(0.0, 0.3, 0.01) var transform_flash_hold: float = 0.06
-@export_range(0.01, 0.3, 0.01) var transform_flash_fade: float = 0.1
-
-@export_group("Movement")
-@export var move_speed: float = 90.0
-
-@export_group("Jump")
-@export var jump_speed: float = 250.0
-@export_range(0.0, 1.0) var jump_cut_multiplier: float = 0.5
-@export_range(0.0, 0.3, 0.01) var jump_coyote_time: float = 0.1
-@export_range(0.0, 0.3, 0.01) var jump_buffer_time: float = 0.1
-
-@export_group("Glide")
-@export_range(0.0, 1.0, 0.01) var glide_hold_time: float = 0.2
-@export_range(1.0, 300.0, 1.0) var glide_fall_speed: float = 60.0
-
-@export_group("Wall Movement")
-@export_range(1.0, 300.0, 1.0) var wall_slide_speed: float = 40.0
-@export var wall_jump_speed: float = 100.0
-@export_range(0.01, 0.5, 0.01) var wall_jump_control_delay: float = 0.12
-
-@export_group("Roll")
-@export var roll_speed: float = 180.0
-@export_range(1, 100, 1) var roll_damage: int = 1
-
-@export_group("Combat")
-@export_range(1, 100, 1) var attack_damage: int = 1
+@export_subgroup("Shot")
+@export_range(0.0, 1.0, 0.05) var protector_shot_move_delay: float = 0.3
+@export var protector_shot_offset := Vector2(30.0, -11.0)
 
 
+var protector_shot_cooldown: float = 0.0
+var protector_shot_move_timer: float = 0.0
 var protector_shot_spawned: bool = false
+var step_shake_timer: float = 0.0
+var camera_base_offset := Vector2.ZERO
 var is_protector: bool = false
 var is_transforming: bool = false
 var is_reverting: bool = false
 var revert_animation_finished: bool = false
-var transform_flash_timer: float = 0.0
-var transform_flash: Sprite2D
+var transform_effect_kind: StringName = &""
 var small_body_shape: Shape2D
 var small_hurtbox_shape: Shape2D
 var small_body_position: Vector2
@@ -205,20 +222,28 @@ var attack_hit_phase: int = -1
 var attack_hit_targets: Array[int] = []
 
 
-@onready var body_collision: CollisionShape2D = $CollisionShape2D
-@onready var hurtbox_collision: CollisionShape2D = $Hurtbox/CollisionShape2D
+@onready var body_collision: CollisionShape2D = $CollisionShape
+@onready var hurtbox_collision: CollisionShape2D = $Hurtbox/CollisionShape
 @onready var player_ui: Node2D = $UI
 @onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
 @onready var visuals: Node2D = $Visuals
-@onready var animated_sprite: AnimatedSprite2D = $Visuals/AnimatedSprite2D
+@onready var animated_sprite: AnimatedSprite2D = $Visuals/Sprite
+@onready var transform_effect: AnimatedSprite2D = $Visuals/Transform
+@onready var effect_base_position: Vector2 = transform_effect.position
+@onready var effect_base_scale: Vector2 = transform_effect.scale
 @onready var sprite_base_modulate: Color = animated_sprite.modulate
 @onready var sprite_base_position: Vector2 = animated_sprite.position
 @onready var attack_collision: CollisionShape2D = (
-	$Visuals/AttackHitbox/CollisionShape2D
+	$Visuals/AttackHitbox/CollisionShape
 )
 
 
 func _ready() -> void:
+	transform_effect.sprite_frames = GOOD_SPRITE_FRAMES
+	transform_effect.animation_finished.connect(_on_transform_effect_finished)
+	stop_transform_effect()
+	if player_camera != null:
+		camera_base_offset = player_camera.offset
 	small_body_shape = body_collision.shape
 	small_hurtbox_shape = hurtbox_collision.shape
 	small_body_position = body_collision.position
@@ -227,14 +252,6 @@ func _ready() -> void:
 	protector_shape = CapsuleShape2D.new()
 	protector_shape.radius = 12.0
 	protector_shape.height = 32.0
-
-	# A separate flash can cover the switch to the larger sprite.
-	transform_flash = Sprite2D.new()
-	transform_flash.name = &"TransformFlash"
-	transform_flash.position = sprite_base_position
-	transform_flash.z_index = 1
-	transform_flash.hide()
-	visuals.add_child(transform_flash)
 
 	animated_sprite.sprite_frames = GOOD_SPRITE_FRAMES
 	animated_sprite.play(&"idle")
@@ -255,12 +272,17 @@ func _ready() -> void:
 
 	animated_sprite.animation_finished.connect(_on_animation_finished)
 	animated_sprite.frame_changed.connect(_on_player_visual_changed)
+	animated_sprite.frame_changed.connect(_on_protector_step_frame_changed)
 	animated_sprite.animation_changed.connect(_on_player_visual_changed)
 	health_changed.emit(current_health, max_health)
 	energy_changed.emit(current_energy, max_energy)
 
 
 func _physics_process(delta: float) -> void:
+	protector_shot_cooldown = maxf(protector_shot_cooldown - delta, 0.0)
+	protector_shot_move_timer = maxf(protector_shot_move_timer - delta, 0.0)
+	update_step_camera_shake(delta)
+
 	if is_dead:
 		update_death_movement(delta)
 		return
@@ -591,6 +613,7 @@ func start_attack(air_attack: bool) -> void:
 
 
 func finish_attack() -> void:
+	protector_shot_move_timer = 0.0
 	protector_shot_spawned = false
 	is_attacking = false
 	is_air_attack = false
@@ -761,10 +784,6 @@ func _on_animation_finished() -> void:
 			death_animation_finished = true
 		return
 
-	if is_reverting and animated_sprite.animation == &"transform":
-		revert_animation_finished = true
-		return
-
 	if hurt_control_timer > 0.0 or is_transforming:
 		return
 
@@ -803,6 +822,8 @@ func receive_fatal_hit(
 ) -> void:
 	if is_environmental_death:
 		return
+
+	stop_transform_effect()
 
 	# A death zone also takes over a body falling after a combat death.
 	var was_dead := is_dead
@@ -908,13 +929,12 @@ func update_hurt_visual() -> void:
 
 
 func reset_action_state() -> void:
+	reset_step_camera_shake()
 	var was_reverting := is_reverting
 	is_reverting = false
 	revert_animation_finished = false
 	is_transforming = false
-	transform_flash_timer = 0.0
-	if is_instance_valid(transform_flash):
-		transform_flash.hide()
+	stop_transform_effect()
 	# Damage may interrupt the return, but must not leave Evil active at zero.
 	if was_reverting:
 		finish_evil_mode(true)
@@ -932,6 +952,7 @@ func reset_action_state() -> void:
 
 
 func die() -> void:
+	stop_transform_effect()
 	reset_death_dissolve()
 	is_dead = true
 	death_fall_timer = 0.0
@@ -1041,6 +1062,8 @@ func set_respawn_position(new_position: Vector2) -> void:
 
 
 func respawn() -> void:
+	protector_shot_cooldown = 0.0
+	stop_transform_effect()
 	# Keep the Evil death animation, but always respawn in Good form.
 	if is_evil:
 		finish_evil_mode(true)
@@ -1104,12 +1127,13 @@ func start_evil_mode() -> void:
 	is_evil = true
 	evil_timer = evil_duration
 	set_player_sprite_frames(EVIL_SPRITE_FRAMES)
+	play_evil_ready_effect()
 	evil_mode_changed.emit(true)
 
 
 func update_evil_mode(delta: float) -> void:
 	# Keep the full charge until the player actually becomes Protector.
-	if not is_evil or not is_protector or is_reverting:
+	if not is_evil or not is_protector or is_transforming:
 		return
 
 	evil_timer = maxf(evil_timer - delta, 0.0)
@@ -1128,6 +1152,7 @@ func finish_evil_mode(force_immediate: bool = false) -> void:
 			start_protector_return()
 			return
 
+	stop_transform_effect()
 	is_reverting = false
 	revert_animation_finished = false
 	if is_protector or is_transforming:
@@ -1149,7 +1174,8 @@ func set_player_sprite_frames(frames: SpriteFrames) -> void:
 
 	animated_sprite.sprite_frames = frames
 
-	if not frames.has_animation(animation_name):
+	# Transform is reserved for the overlay, never the main character sprite.
+	if animation_name == &"transform" or not frames.has_animation(animation_name):
 		animation_name = &"idle"
 		frame_index = 0
 		frame_progress = 0.0
@@ -1162,6 +1188,72 @@ func set_player_sprite_frames(frames: SpriteFrames) -> void:
 
 	if not was_playing:
 		animated_sprite.pause()
+
+
+# Shared transformation effect sprite
+
+func play_evil_ready_effect() -> void:
+	if not has_transform_effect(GOOD_SPRITE_FRAMES):
+		push_warning("Player: configure a non-looping transform effect in Good frames.")
+		return
+
+	play_transform_effect(GOOD_SPRITE_FRAMES, &"evil_ready")
+
+
+func has_transform_effect(frames: SpriteFrames) -> bool:
+	return (
+		frames.has_animation(&"transform")
+		and frames.get_frame_count(&"transform") > 0
+		and not frames.get_animation_loop(&"transform")
+	)
+
+
+func play_transform_effect(frames: SpriteFrames, kind: StringName, backwards: bool = false) -> void:
+	stop_transform_effect()
+	transform_effect.sprite_frames = frames
+	transform_effect_kind = kind
+	transform_effect.modulate = Color.WHITE
+
+	if frames == GOOD_SPRITE_FRAMES:
+		transform_effect.position = effect_base_position
+		transform_effect.scale = effect_base_scale
+		transform_effect.speed_scale = evil_ready_effect_speed
+	else:
+		# The Evil sheet includes the panda; scale its pose around the feet.
+		transform_effect.position = sprite_base_position * transform_flash_scale
+		transform_effect.scale = Vector2.ONE * transform_flash_scale
+		transform_effect.speed_scale = 1.0
+		# Keep Protector visible until the reverse flash covers the switch.
+		animated_sprite.visible = backwards
+
+	transform_effect.show()
+	if backwards:
+		transform_effect.play_backwards(&"transform")
+		transform_effect.set_frame_and_progress(TRANSFORM_FLASH_FRAME, 1.0)
+	else:
+		transform_effect.play(&"transform")
+		transform_effect.set_frame_and_progress(0, 0.0)
+
+
+func stop_transform_effect() -> void:
+	transform_effect_kind = &""
+	transform_effect.stop()
+	transform_effect.hide()
+	transform_effect.modulate = Color.WHITE
+	animated_sprite.show()
+
+
+func _on_transform_effect_finished() -> void:
+	if transform_effect.animation != &"transform":
+		return
+
+	if transform_effect_kind == &"evil_ready":
+		stop_transform_effect()
+	elif transform_effect_kind == &"protector_enter" and is_protector:
+		stop_transform_effect()
+		is_transforming = false
+	elif transform_effect_kind == &"protector_return" and is_reverting:
+		revert_animation_finished = true
 
 
 # Protector transformation
@@ -1190,16 +1282,17 @@ func try_start_protector_transform() -> void:
 		or EVIL_SPRITE_FRAMES.get_frame_count(&"transform") <= TRANSFORM_FLASH_FRAME
 		or EVIL_SPRITE_FRAMES.get_animation_loop(&"transform")
 	):
-		push_warning("Player: configure three non-looping transform frames in Evil.")
+		push_warning("Player: configure a non-looping transform animation with at least three frames in Evil.")
 		return
 
 	if not can_fit_protector():
 		return
 
+	stop_transform_effect()
 	reset_action_state()
 	is_transforming = true
 	velocity = Vector2.ZERO
-	animated_sprite.play(&"transform")
+	play_transform_effect(EVIL_SPRITE_FRAMES, &"protector_enter")
 
 
 func update_protector_transform(delta: float) -> void:
@@ -1208,15 +1301,18 @@ func update_protector_transform(delta: float) -> void:
 	move_and_slide()
 
 	if is_reverting:
-		update_transform_flash(delta)
-		if revert_animation_finished and transform_flash_timer <= 0.0:
+		if is_protector and transform_effect.frame <= TRANSFORM_FLASH_FRAME:
+			apply_small_form_geometry()
+			animated_sprite.sprite_frames = EVIL_SPRITE_FRAMES
+			animated_sprite.play(&"idle")
+			animated_sprite.hide()
+		if revert_animation_finished:
+			# Restore Good immediately after frame zero, without a hold or fade.
 			finish_evil_mode(true)
 		return
 
 	if is_protector:
-		update_transform_flash(delta)
-		if transform_flash_timer <= 0.0:
-			is_transforming = false
+		# The remaining frames dissipate naturally over the new body.
 		return
 
 	# Recheck clearance at the actual switch, in case the scenery moved.
@@ -1224,7 +1320,7 @@ func update_protector_transform(delta: float) -> void:
 		cancel_protector_transform()
 		return
 
-	if animated_sprite.animation == &"transform" and animated_sprite.frame >= TRANSFORM_FLASH_FRAME:
+	if transform_effect.animation == &"transform" and transform_effect.frame >= TRANSFORM_FLASH_FRAME:
 		if can_fit_protector():
 			enter_protector_form()
 		else:
@@ -1241,17 +1337,17 @@ func enter_protector_form() -> void:
 	hurtbox_collision.set_deferred("position", PROTECTOR_BODY_POSITION)
 	update_player_ui_position()
 
-	start_transform_flash()
 
 	animated_sprite.sprite_frames = PROTECTOR_SPRITE_FRAMES
 	animated_sprite.position = PROTECTOR_SPRITE_POSITION
 	animated_sprite.flip_h = false
 	animated_sprite.play(&"idle")
+	animated_sprite.show()
 
 
 func cancel_protector_transform() -> void:
 	is_transforming = false
-	transform_flash.hide()
+	stop_transform_effect()
 	update_animation(0.0)
 
 
@@ -1260,6 +1356,14 @@ func update_protector_movement(delta: float) -> void:
 	velocity += get_gravity() * delta
 
 	var direction := Input.get_axis("move_left", "move_right")
+
+	# Movement can cancel recovery, but never bypass the weapon cooldown.
+	if (
+		is_attacking and protector_shot_spawned
+		and animated_sprite.animation == &"shoot"
+		and protector_shot_move_timer <= 0.0 and direction != 0.0
+	):
+		finish_attack()
 
 	if not is_attacking:
 		if direction != 0.0:
@@ -1283,7 +1387,7 @@ func update_protector_movement(delta: float) -> void:
 func start_protector_attack() -> void:
 	if (
 		not is_protector or is_dead or is_transforming or is_attacking
-		or hurt_control_timer > 0.0
+		or hurt_control_timer > 0.0 or protector_shot_cooldown > 0.0
 		or not is_on_floor() or velocity.y < 0.0
 	):
 		return
@@ -1306,7 +1410,7 @@ func start_protector_attack() -> void:
 func start_protector_shoot() -> void:
 	if (
 		not is_protector or is_dead or is_transforming or is_attacking
-		or hurt_control_timer > 0.0
+		or hurt_control_timer > 0.0 or protector_shot_cooldown > 0.0
 		or not is_on_floor() or velocity.y < 0.0
 	):
 		return
@@ -1323,6 +1427,13 @@ func start_protector_shoot() -> void:
 	reset_action_state()
 	is_attacking = true
 	velocity.x = 0.0
+	# Match the original full animation duration, including custom frame lengths.
+	var duration := 0.0
+	for frame in range(frames.get_frame_count(&"shoot")):
+		duration += frames.get_frame_duration(&"shoot", frame)
+	protector_shot_cooldown = duration / maxf(
+		frames.get_animation_speed(&"shoot") * absf(animated_sprite.speed_scale), 0.001
+	)
 	animated_sprite.play(&"shoot")
 
 
@@ -1342,6 +1453,7 @@ func try_spawn_protector_shot() -> void:
 		return
 
 	protector_shot_spawned = true
+	protector_shot_move_timer = protector_shot_move_delay
 	var shot := PROTECTOR_SHOT_SCENE.instantiate() as Node2D
 	# Capture the muzzle position and facing so the effect stays in the world.
 	var shot_transform := visuals.global_transform * Transform2D(
@@ -1354,6 +1466,12 @@ func try_spawn_protector_shot() -> void:
 func restore_small_form() -> void:
 	is_protector = false
 	reset_action_state()
+	apply_small_form_geometry()
+
+
+func apply_small_form_geometry() -> void:
+	# Restore collisions without interrupting the active overlay.
+	is_protector = false
 	body_collision.shape = small_body_shape
 	body_collision.position = small_body_position
 	hurtbox_collision.set_deferred("shape", small_hurtbox_shape)
@@ -1398,33 +1516,58 @@ func _on_player_visual_changed() -> void:
 	try_spawn_protector_shot()
 
 
-# Shared flash and reverse transition
+# Protector footstep camera feedback
 
-func start_transform_flash() -> void:
-	transform_flash.texture = EVIL_SPRITE_FRAMES.get_frame_texture(
-		&"transform", TRANSFORM_FLASH_FRAME
+func _on_protector_step_frame_changed() -> void:
+	if (
+		player_camera == null
+		or not is_protector or is_dead or is_transforming or is_attacking
+		or hurt_control_timer > 0.0
+		or animated_sprite.animation != &"walk"
+		or not protector_step_frames.has(animated_sprite.frame)
+		or not is_on_floor()
+		or absf(get_real_velocity().x) < 1.0
+		or is_zero_approx(Input.get_axis("move_left", "move_right"))
+		or protector_step_shake_strength <= 0.0
+	):
+		return
+
+	step_shake_timer = protector_step_shake_duration
+
+
+func update_step_camera_shake(delta: float) -> void:
+	if player_camera == null:
+		return
+
+	if is_dead or not is_protector or protector_step_shake_strength <= 0.0:
+		reset_step_camera_shake()
+		return
+
+	step_shake_timer = maxf(step_shake_timer - delta, 0.0)
+	if step_shake_timer <= 0.0:
+		player_camera.offset = camera_base_offset
+		return
+
+	var duration := maxf(protector_step_shake_duration, 0.001)
+	var progress := clampf(1.0 - step_shake_timer / duration, 0.0, 1.0)
+	# One smooth downward pulse followed by a return to the original offset.
+	var pulse := sin(progress * PI)
+	player_camera.offset = camera_base_offset + Vector2(
+		0.0, pulse * protector_step_shake_strength
 	)
-	# Scale around the player's feet, preserving whole source pixels.
-	var flash_scale := float(transform_flash_scale)
-	transform_flash.scale = Vector2.ONE * flash_scale
-	transform_flash.position = sprite_base_position * flash_scale
-	transform_flash.modulate = Color.WHITE
-	transform_flash_timer = transform_flash_hold + transform_flash_fade
-	transform_flash.show()
 
 
-func update_transform_flash(delta: float) -> void:
-	transform_flash_timer = maxf(transform_flash_timer - delta, 0.0)
-	transform_flash.modulate.a = clampf(
-		transform_flash_timer / maxf(transform_flash_fade, 0.001), 0.0, 1.0
-	)
-	if transform_flash_timer <= 0.0:
-		transform_flash.hide()
+func reset_step_camera_shake() -> void:
+	step_shake_timer = 0.0
+	if player_camera != null:
+		player_camera.offset = camera_base_offset
 
+
+# Reverse transformation
 
 func start_protector_return() -> void:
-	# Reverse the three transition frames beneath the enlarged flash.
-	restore_small_form()
+	# Keep the large body until the reverse animation reaches the flash.
+	reset_action_state()
 	is_transforming = true
 	is_reverting = true
 	revert_animation_finished = false
@@ -1433,6 +1576,5 @@ func start_protector_return() -> void:
 	current_energy = 0
 	energy_changed.emit(current_energy, max_energy)
 
-	animated_sprite.sprite_frames = EVIL_SPRITE_FRAMES
-	animated_sprite.play_backwards(&"transform")
-	start_transform_flash()
+	animated_sprite.play(&"idle")
+	play_transform_effect(EVIL_SPRITE_FRAMES, &"protector_return", true)

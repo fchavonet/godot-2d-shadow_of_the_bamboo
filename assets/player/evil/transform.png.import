@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://0r3hykt3ms8s"
-path="res://.godot/imported/heli_slam.png-bb772345cafdcd62fdfd1f92183fb16c.ctex"
+uid="uid://bynjy0i5wol12"
+path="res://.godot/imported/transform.png-ee6760ed58ac939da26aa5e8166f40d7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/player/evil/heli_slam.png"
-dest_files=["res://.godot/imported/heli_slam.png-bb772345cafdcd62fdfd1f92183fb16c.ctex"]
+source_file="res://assets/player/evil/transform.png"
+dest_files=["res://.godot/imported/transform.png-ee6760ed58ac939da26aa5e8166f40d7.ctex"]
 
 [params]
 

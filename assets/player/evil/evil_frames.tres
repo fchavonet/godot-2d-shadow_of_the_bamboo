@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://b04auh3dba2o7" path="res://assets/player/evil/roll.png" id="8_2lj2v"]
 [ext_resource type="Texture2D" uid="uid://dx5x0eqqjvy52" path="res://assets/player/evil/run.png" id="9_n3abp"]
 [ext_resource type="Texture2D" uid="uid://fxhthibc4mr7" path="res://assets/player/evil/wall_slide.png" id="10_2lj2v"]
-[ext_resource type="Texture2D" uid="uid://0r3hykt3ms8s" path="res://assets/player/evil/heli_slam.png" id="10_n3abp"]
+[ext_resource type="Texture2D" uid="uid://bynjy0i5wol12" path="res://assets/player/evil/transform.png" id="11_transform"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hqrbs"]
 atlas = ExtResource("1_2lj2v")
@@ -253,16 +253,48 @@ atlas = ExtResource("9_n3abp")
 region = Rect2(721, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4q7yq"]
-atlas = ExtResource("10_n3abp")
+atlas = ExtResource("11_transform")
 region = Rect2(0, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_elwc8"]
-atlas = ExtResource("10_n3abp")
+atlas = ExtResource("11_transform")
 region = Rect2(103, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_w7y35"]
-atlas = ExtResource("10_n3abp")
+atlas = ExtResource("11_transform")
 region = Rect2(206, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rtqbl"]
+atlas = ExtResource("11_transform")
+region = Rect2(309, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_at4n5"]
+atlas = ExtResource("11_transform")
+region = Rect2(412, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hk6io"]
+atlas = ExtResource("11_transform")
+region = Rect2(515, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_afdjb"]
+atlas = ExtResource("11_transform")
+region = Rect2(618, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3xh34"]
+atlas = ExtResource("11_transform")
+region = Rect2(721, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yupho"]
+atlas = ExtResource("11_transform")
+region = Rect2(824, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_867iw"]
+atlas = ExtResource("11_transform")
+region = Rect2(927, 0, 103, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qispf"]
+atlas = ExtResource("11_transform")
+region = Rect2(1030, 0, 103, 33)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3cjwg"]
 atlas = ExtResource("10_2lj2v")
@@ -521,6 +553,30 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_w7y35")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rtqbl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_at4n5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hk6io")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_afdjb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3xh34")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yupho")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_867iw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qispf")
 }],
 "loop": 0,
 "name": &"transform",

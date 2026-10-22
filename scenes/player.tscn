@@ -2,9 +2,17 @@
 
 [ext_resource type="Script" uid="uid://ce8rrbggen1rf" path="res://scripts/player.gd" id="1_qhqgy"]
 [ext_resource type="Shader" uid="uid://iv2mgrk6vcf" path="res://shaders/player_death_dissolve.gdshader" id="2_jej6c"]
-[ext_resource type="SpriteFrames" uid="uid://c2sxybnp0jps7" path="res://assets/player/good/good_frames.tres" id="3_qlg0r"]
+[ext_resource type="SpriteFrames" uid="uid://c2sxybnp0jps7" path="res://assets/player/good/good_frames.tres" id="4_tuyoq"]
 [ext_resource type="Script" uid="uid://dpt524x4nyqoi" path="res://scripts/player_health_bar.gd" id="12_3v2ag"]
 [ext_resource type="Script" uid="uid://f5blafni052g" path="res://scripts/player_ui.gd" id="13_f1ej7"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_jieny"]
+radius = 5.0
+height = 16.0
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_nfwyi"]
+radius = 5.0
+height = 16.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2ue4q"]
 shader = ExtResource("2_jej6c")
@@ -28,43 +36,47 @@ content_margin_right = 0.0
 content_margin_bottom = 0.0
 bg_color = Color(1, 1, 1, 1)
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_jieny"]
-radius = 5.0
-height = 16.0
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_nfwyi"]
-radius = 5.0
-height = 16.0
-
 [node name="Player" type="CharacterBody2D" unique_id=1105530384]
 safe_margin = 0.001
 script = ExtResource("1_qhqgy")
-protector_shot_offset = Vector2(30, -11)
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=410877848]
+[node name="CollisionShape" type="CollisionShape2D" parent="." unique_id=382385470]
 position = Vector2(0, -8)
-process_callback = 0
-position_smoothing_enabled = true
-position_smoothing_speed = 8.0
-drag_horizontal_enabled = true
-drag_vertical_enabled = true
-drag_left_margin = 0.1
-drag_right_margin = 0.1
+shape = SubResource("CapsuleShape2D_jieny")
+
+[node name="Hurtbox" type="Area2D" parent="." unique_id=1019010706]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape" type="CollisionShape2D" parent="Hurtbox" unique_id=1018743805]
+position = Vector2(0, -8)
+shape = SubResource("CapsuleShape2D_nfwyi")
 
 [node name="Visuals" type="Node2D" parent="." unique_id=1896689742]
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals" unique_id=730011078]
+[node name="Sprite" type="AnimatedSprite2D" parent="Visuals" unique_id=730011078]
 material = SubResource("ShaderMaterial_2ue4q")
 position = Vector2(8.5, -12.5)
-sprite_frames = ExtResource("3_qlg0r")
-animation = &"attack_1"
+sprite_frames = ExtResource("4_tuyoq")
+animation = &"transform"
+frame = 8
+frame_progress = 1.0
+
+[node name="Transform" type="AnimatedSprite2D" parent="Visuals" unique_id=652749318]
+z_index = 1
+position = Vector2(-5, -14.5)
+sprite_frames = ExtResource("4_tuyoq")
+animation = &"transform"
+frame = 8
+frame_progress = 1.0
 
 [node name="AttackHitbox" type="Area2D" parent="Visuals" unique_id=1347239026]
 collision_layer = 0
 collision_mask = 4
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Visuals/AttackHitbox" unique_id=1360114154]
+[node name="CollisionShape" type="CollisionShape2D" parent="Visuals/AttackHitbox" unique_id=1360114154]
 position = Vector2(18, -8)
 shape = SubResource("RectangleShape2D_jieny")
 disabled = true
@@ -88,15 +100,12 @@ max_value = 20.0
 value = 10.0
 show_percentage = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=382385470]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=410877848]
 position = Vector2(0, -8)
-shape = SubResource("CapsuleShape2D_jieny")
-
-[node name="Hurtbox" type="Area2D" parent="." unique_id=1019010706]
-collision_layer = 2
-collision_mask = 0
-monitoring = false
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=1018743805]
-position = Vector2(0, -8)
-shape = SubResource("CapsuleShape2D_nfwyi")
+process_callback = 0
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+drag_horizontal_enabled = true
+drag_vertical_enabled = true
+drag_left_margin = 0.1
+drag_right_margin = 0.1

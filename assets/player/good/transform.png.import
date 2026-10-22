@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bdu8u0d43asp4"
-path="res://.godot/imported/heli_slam.png-de62ca11b6fa15c8c0857f4b264cb578.ctex"
+uid="uid://wn0r5ads2b2e"
+path="res://.godot/imported/transform.png-e01924f658fa64f4cb8163aa817988e8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/player/good/heli_slam.png"
-dest_files=["res://.godot/imported/heli_slam.png-de62ca11b6fa15c8c0857f4b264cb578.ctex"]
+source_file="res://assets/player/good/transform.png"
+dest_files=["res://.godot/imported/transform.png-e01924f658fa64f4cb8163aa817988e8.ctex"]
 
 [params]
 
