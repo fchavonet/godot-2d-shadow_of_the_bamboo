@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://3dnreevxia2i"]
 
 [ext_resource type="Texture2D" uid="uid://0qyovlyxfcih" path="res://assets/player/protector/blast.png" id="1_ft34h"]
-[ext_resource type="Script" uid="uid://dyfb4rwmje1r" path="res://scripts/protector_shot.gd" id="1_j54rp"]
+[ext_resource type="Script" uid="uid://dyfb4rwmje1r" path="res://scripts/player/protector_shot.gd" id="1_j54rp"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_j54rp"]
 atlas = ExtResource("1_ft34h")
@@ -120,6 +120,7 @@ animations = [{
 size = Vector2(132, 20)
 
 [node name="ProtectorShot" type="Node2D" unique_id=1799265251]
+z_index = 40
 script = ExtResource("1_j54rp")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=57380850]

@@ -36,7 +36,7 @@ const SMALL_RUN_UI_OFFSETS: Array[float] = [
 ]
 const PROTECTOR_MELEE_HIT_FRAME: int = 4
 const PROTECTOR_SHOOT_FRAME: int = 3
-const PROTECTOR_SHOT_SCENE: PackedScene = preload("res://scenes/protector_shot.tscn")
+const PROTECTOR_SHOT_SCENE: PackedScene = preload("res://scenes/player/protector_shot.tscn")
 const TRANSFORM_FLASH_FRAME: int = 2
 
 const ATTACK_ANIMATIONS: Array[StringName] = [
@@ -65,7 +65,7 @@ const ATTACK_SIZES: Array[Vector2] = [
 	Vector2(40.5, 16.0),
 ]
 
-const DEATH_DISSOLVE_SHADER: Shader = preload("res://shaders/player_death_dissolve.gdshader")
+const DEATH_DISSOLVE_SHADER: Shader = preload("res://shaders/player/player_death_dissolve.gdshader")
 
 const WALL_SLIDE_VISUAL_OFFSET := Vector2(-1.0, 0.0)
 

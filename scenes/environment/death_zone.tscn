@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://86asllqoeya"]
 
-[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/damage_zone.gd" id="1_orvjg"]
+[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/environment/damage_zone.gd" id="1_orvjg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
 size = Vector2(2000, 64)

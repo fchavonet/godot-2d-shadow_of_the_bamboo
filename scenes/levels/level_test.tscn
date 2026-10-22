@@ -1,0 +1,110 @@
+[gd_scene format=3 uid="uid://p8b5xeed1xn2"]
+
+[ext_resource type="PackedScene" uid="uid://86asllqoeya" path="res://scenes/environment/death_zone.tscn" id="1_2ue4q"]
+[ext_resource type="PackedScene" uid="uid://bl7p85b67cbqt" path="res://scenes/player/player.tscn" id="1_a8v3n"]
+[ext_resource type="PackedScene" uid="uid://calt6wp24d5jj" path="res://scenes/environment/platform.tscn" id="2_2ue4q"]
+[ext_resource type="PackedScene" uid="uid://xtadlvlm5yem" path="res://scenes/environment/damage_zone.tscn" id="2_6p80c"]
+[ext_resource type="PackedScene" uid="uid://bbi8v2nv45h75" path="res://scenes/enemies/training_dummy.tscn" id="2_fdpfy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nfwyi"]
+size = Vector2(16, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
+size = Vector2(320, 20)
+
+[node name="LevelTest" type="Node2D" unique_id=128439845]
+
+[node name="Environment" type="Node2D" parent="." unique_id=715786077]
+
+[node name="DeathZone" parent="Environment" unique_id=615691188 instance=ExtResource("1_2ue4q")]
+position = Vector2(160, 212)
+death_animation = true
+
+[node name="Wall3" type="StaticBody2D" parent="Environment/DeathZone" unique_id=625340647]
+position = Vector2(152, -102)
+
+[node name="Visual" type="ColorRect" parent="Environment/DeathZone/Wall3" unique_id=1658996536]
+offset_left = -8.0
+offset_top = -50.0
+offset_right = 8.0
+offset_bottom = 50.0
+color = Color(0.043137256, 0.043137256, 0.043137256, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/DeathZone/Wall3" unique_id=32640274]
+shape = SubResource("RectangleShape2D_nfwyi")
+
+[node name="Ground" type="StaticBody2D" parent="Environment" unique_id=1002572673]
+position = Vector2(160, 170)
+
+[node name="Visual" type="ColorRect" parent="Environment/Ground" unique_id=1354774494]
+offset_left = -160.0
+offset_top = -10.0
+offset_right = 160.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(0.043137256, 0.043137256, 0.043137256, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ground" unique_id=1869337854]
+shape = SubResource("RectangleShape2D_jieny")
+
+[node name="Wall1" type="StaticBody2D" parent="Environment" unique_id=1016537397]
+position = Vector2(8, 110)
+
+[node name="Visual" type="ColorRect" parent="Environment/Wall1" unique_id=456546722]
+offset_left = -8.0
+offset_top = -50.0
+offset_right = 8.0
+offset_bottom = 50.0
+color = Color(0.043137256, 0.043137256, 0.043137256, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Wall1" unique_id=663028177]
+shape = SubResource("RectangleShape2D_nfwyi")
+
+[node name="Wall2" type="StaticBody2D" parent="Environment" unique_id=1498157386]
+position = Vector2(60, 110)
+
+[node name="Visual" type="ColorRect" parent="Environment/Wall2" unique_id=492015354]
+offset_left = -8.0
+offset_top = -50.0
+offset_right = 8.0
+offset_bottom = 50.0
+color = Color(0.043137256, 0.043137256, 0.043137256, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Wall2" unique_id=177590920]
+shape = SubResource("RectangleShape2D_nfwyi")
+
+[node name="Platform1" parent="Environment" unique_id=1430471380 instance=ExtResource("2_2ue4q")]
+position = Vector2(82, 84)
+
+[node name="Platform2" parent="Environment" unique_id=1202356040 instance=ExtResource("2_2ue4q")]
+position = Vector2(110, 110)
+
+[node name="Platform3" parent="Environment" unique_id=544743875 instance=ExtResource("2_2ue4q")]
+position = Vector2(138, 136)
+
+[node name="DamageZone" parent="Environment" unique_id=998854952 instance=ExtResource("2_6p80c")]
+position = Vector2(268, 159)
+priority = 2
+death_animation = true
+damage = 2
+
+[node name="Enemies" type="Node2D" parent="." unique_id=1186214394]
+
+[node name="TrainingDummy1" parent="Enemies" unique_id=675501490 instance=ExtResource("2_fdpfy")]
+position = Vector2(96, 160)
+gem_drop_min = 10
+gem_drop_max = 10
+
+[node name="TrainingDummy2" parent="Enemies" unique_id=646316993 instance=ExtResource("2_fdpfy")]
+position = Vector2(224, 160)
+gem_drop_min = 10
+gem_drop_max = 10
+
+[node name="Sprite" parent="Enemies/TrainingDummy2/Visuals" parent_id_path=PackedInt32Array(646316993, 1227207970) index="0" unique_id=618856447]
+flip_h = true
+
+[node name="Player" parent="." unique_id=1105530384 instance=ExtResource("1_a8v3n")]
+position = Vector2(33, 132)
+max_energy = 10
+
+[editable path="Enemies/TrainingDummy2"]

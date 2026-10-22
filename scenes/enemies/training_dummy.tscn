@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://bbi8v2nv45h75"]
+
+[ext_resource type="Script" uid="uid://yx2y2lclmihq" path="res://scripts/enemies/training_dummy.gd" id="1_v6s2v"]
+[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/environment/damage_zone.gd" id="2_jt8kp"]
+[ext_resource type="SpriteFrames" uid="uid://cmyttr012dov3" path="res://assets/enemies/training_dummy/training_dummy_frames.tres" id="3_du35q"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_x7tab"]
+size = Vector2(8.75, 31)
+
+[node name="TrainingDummy" type="Node2D" unique_id=675501490]
+z_index = 10
+script = ExtResource("1_v6s2v")
+
+[node name="Hurtbox" type="Area2D" parent="." unique_id=998048803]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("2_jt8kp")
+death_animation = true
+
+[node name="CollisionShape" type="CollisionShape2D" parent="Hurtbox" unique_id=883638673]
+position = Vector2(-0.15, -15.5)
+shape = SubResource("RectangleShape2D_x7tab")
+
+[node name="Visuals" type="Node2D" parent="." unique_id=1227207970]
+
+[node name="Sprite" type="AnimatedSprite2D" parent="Visuals" unique_id=618856447]
+position = Vector2(0.25, -16)
+scale = Vector2(0.8, 0.8)
+sprite_frames = ExtResource("3_du35q")
+animation = &"idle"

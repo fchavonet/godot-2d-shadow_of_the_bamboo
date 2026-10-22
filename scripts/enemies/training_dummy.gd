@@ -4,11 +4,11 @@ signal health_changed(current: int, maximum: int)
 signal died
 
 const DAMAGE_NUMBER_SCENE: PackedScene = preload(
-	"res://scenes/damage_number.tscn"
+	"res://scenes/effects/damage_number.tscn"
 )
 
 
-const GEM_SCENE: PackedScene = preload("res://scenes/gem.tscn")
+const GEM_SCENE: PackedScene = preload("res://scenes/collectibles/gem.tscn")
 
 
 @export_group("Gem Drops")
@@ -22,34 +22,30 @@ const GEM_SCENE: PackedScene = preload("res://scenes/gem.tscn")
 @export_range(1, 1000, 1) var max_health: int = 10
 
 @export_group("Feedback")
-@export_range(0.01, 0.5, 0.01) var hit_flash_duration: float = 0.1
-@export var damage_number_offset: Vector2 = Vector2(0.0, -28.0)
+@export var damage_number_offset: Vector2 = Vector2(0.0, -34.0)
 
 
 var health: int = 0
-var hit_flash_timer: float = 0.0
 var is_dead: bool = false
 
 
-@onready var visual: ColorRect = $Visual
-@onready var base_color: Color = visual.color
+@onready var animated_sprite: AnimatedSprite2D = $Visuals/Sprite
 @onready var hurtbox: Area2D = $Hurtbox
 
 
 func _ready() -> void:
 	health = max_health
+	animated_sprite.animation_finished.connect(_on_animation_finished)
+	animated_sprite.play(&"idle")
 	health_changed.emit(health, max_health)
 
 
-func _process(delta: float) -> void:
+func _on_animation_finished() -> void:
 	if is_dead:
 		return
 
-	if hit_flash_timer > 0.0:
-		hit_flash_timer = maxf(hit_flash_timer - delta, 0.0)
-
-		if hit_flash_timer == 0.0:
-			visual.color = base_color
+	if animated_sprite.animation == &"hit":
+		animated_sprite.play(&"idle")
 
 
 # Health and damage
@@ -67,8 +63,9 @@ func receive_hit(damage: int) -> void:
 		die()
 		return
 
-	hit_flash_timer = hit_flash_duration
-	visual.color = Color.WHITE
+	# Restart the reaction for each hit, including rapid combo hits.
+	animated_sprite.stop()
+	animated_sprite.play(&"hit")
 
 
 func die() -> void:
@@ -77,12 +74,30 @@ func die() -> void:
 
 	is_dead = true
 
-	# Stop contact damage immediately, before deferred removal.
+	# Stop dealing damage immediately and remove the target from detection.
 	hurtbox.set("enabled", false)
+	hurtbox.set_deferred("collision_layer", 0)
+	hurtbox.set_deferred("collision_mask", 0)
+	hurtbox.set_deferred("monitoring", false)
+	hurtbox.set_deferred("monitorable", false)
 
+	# Gems are released once, on the lethal hit.
 	drop_gems()
+	var frames := animated_sprite.sprite_frames
+	if (
+		frames != null
+		and frames.has_animation(&"death")
+		and frames.get_frame_count(&"death") > 0
+		and not frames.get_animation_loop(&"death")
+		and frames.get_animation_speed(&"death") > 0.0
+		and animated_sprite.speed_scale > 0.0
+	):
+		animated_sprite.stop()
+		animated_sprite.play(&"death")
+	else:
+		push_warning("TrainingDummy: configure a non-looping death animation.")
+		queue_free()
 	died.emit()
-	queue_free()
 
 
 # Damage feedback
@@ -112,5 +127,5 @@ func drop_gems() -> void:
 		gem.global_position = global_position + gem_drop_offset
 		gem.launch(Vector2(
 			randf_range(-gem_spread_speed, gem_spread_speed),
-			-randf_range(gem_launch_speed * 0.7, gem_launch_speed)
+			- randf_range(gem_launch_speed * 0.7, gem_launch_speed)
 		))

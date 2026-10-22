@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://8tao8jm6dxfw"]
 
-[ext_resource type="Script" uid="uid://b0bhpamopp1ig" path="res://scripts/gem.gd" id="1_5cxma"]
+[ext_resource type="Script" uid="uid://b0bhpamopp1ig" path="res://scripts/collectibles/gem.gd" id="1_5cxma"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
 size = Vector2(2, 2)
@@ -14,6 +14,7 @@ safe_margin = 0.01
 script = ExtResource("1_5cxma")
 
 [node name="Visual" type="ColorRect" parent="." unique_id=1148402132]
+z_index = 30
 offset_left = -1.0
 offset_top = -1.0
 offset_right = 1.0

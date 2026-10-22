@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://d1whftweirygx"]
 
-[ext_resource type="Script" uid="uid://cf3xjxsgihfl2" path="res://scripts/damage_number.gd" id="1_aie4f"]
+[ext_resource type="Script" uid="uid://cf3xjxsgihfl2" path="res://scripts/effects/damage_number.gd" id="1_aie4f"]
 [ext_resource type="FontFile" uid="uid://c24d7uetq1v4g" path="res://assets/fonts/3x5_block_mono.ttf" id="2_l4fel"]
 
 [node name="DamageNumber" type="Node2D" unique_id=347275756]
-z_index = 10
+z_index = 90
 script = ExtResource("1_aie4f")
 
 [node name="Value" type="Label" parent="." unique_id=1565233447]

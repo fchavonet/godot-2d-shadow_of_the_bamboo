@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://xtadlvlm5yem"]
 
-[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/damage_zone.gd" id="1_ppofr"]
+[ext_resource type="Script" uid="uid://cjx6kekw4sfiy" path="res://scripts/environment/damage_zone.gd" id="1_ppofr"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jieny"]
 size = Vector2(32, 2)
@@ -12,6 +12,7 @@ monitorable = false
 script = ExtResource("1_ppofr")
 
 [node name="Visual" type="ColorRect" parent="." unique_id=1292670908]
+z_index = 5
 offset_left = -16.0
 offset_top = -1.0
 offset_right = 16.0
